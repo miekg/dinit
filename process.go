@@ -73,14 +73,14 @@ func main() {
 Wait:
 	for {
 		select {
+		case <-chld:
+			go reaper()
 		case <-done:
 			i++
 			if len(cmds) == i {
 				reaper()
 				break Wait
 			}
-		case <-chld:
-			go reaper()
 		case sig := <-ints:
 			// There is a race here, because the process could have died, we don't care.
 			for _, cmd := range cmds {
