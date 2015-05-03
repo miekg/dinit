@@ -30,3 +30,7 @@ Do:
 
 Go Tests. The docker directory contains some files to run a docker container to
 test a few things.
+
+# Misc
+
+Build with `go build -ldflags -s` to reduce the size a bit.
