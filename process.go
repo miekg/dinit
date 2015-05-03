@@ -10,17 +10,20 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 )
 
 var (
-	port                 int
+	port, sleep          int
 	namespace, subsystem string
 )
 
 func main() {
 	flag.IntVar(&port, "port", 0, "port to export metricss for Prometheus")
+	flag.IntVar(&sleep, "sleep", 5, "how many seconds to sleep before force killing programs")
 	flag.StringVar(&namespace, "namespace", "", "namespace to use for Prometheus")
 	flag.StringVar(&subsystem, "subsystem", "", "subsystem to use for Prometheus")
+
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... PROGRAM [PROGRAM]...")
 		fmt.Fprintln(os.Stderr, "Start PROGRAMs by passing the enviroment and reap any zombies.\n")
@@ -75,19 +78,18 @@ Wait:
 			}
 		case sig := <-sigs:
 			if sig == syscall.SIGCHLD {
-				// If for my own children don't wait here, as we were waiting
-				// above.
-				var wstatus syscall.WaitStatus
-				for {
-					pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
-					if err != nil {
-						log.Printf("dinit: pid %d Wait4 error: %s", pid, err)
-						break
+				// If for my own children don't wait here, as we were waiting above.
+				go func() {
+					for {
+						var wstatus syscall.WaitStatus
+						pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
+						if err != nil {
+							return
+						}
+						log.Printf("dinit: pid %d reaped", pid)
+						zombies.Inc()
 					}
-					log.Printf("dinit: pid %d reaped", pid)
-					zombies.Inc()
-
-				}
+				}()
 				break
 			}
 
@@ -96,6 +98,13 @@ Wait:
 				log.Printf("dinit: signal %d sent to pid %d", sig, cmd.Process.Pid)
 				cmd.Process.Signal(sig)
 			}
+			// TODO(miek): should be conditional, i.e. only kill whats is really left.
+				log.Printf("dinit: SIGKILL remaining processes in %d seconds", sleep)
+			time.Sleep(time.Duration(sleep) * time.Second)
+			for _, cmd := range cmds {
+				cmd.Process.Signal(syscall.SIGKILL)
+			}
+			break Wait
 		}
 	}
 }
