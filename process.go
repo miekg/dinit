@@ -76,32 +76,42 @@ Wait:
 		case <-done:
 			i++
 			if len(cmds) == i {
+				reaper()
 				break Wait
 			}
 		case <-chld:
-			go func() {
-				for {
-					var wstatus syscall.WaitStatus
-					pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
-					if err != nil {
-						return
-					}
-					log.Printf("dinit: pid %d reaped", pid)
-					zombies.Inc()
-				}
-			}()
+			go reaper()
 		case sig := <-ints:
 			// There is a race here, because the process could have died, we don't care.
 			for _, cmd := range cmds {
 				log.Printf("dinit: signal %d sent to pid %d", sig, cmd.Process.Pid)
 				cmd.Process.Signal(sig)
 			}
-			// TODO(miek): should be conditional, i.e. only kill whats is really left.
-			log.Printf("dinit: SIGKILL remaining processes in %d seconds", sleep)
+
 			time.Sleep(time.Duration(sleep) * time.Second)
+
+			kill := []*os.Process{}
 			for _, cmd := range cmds {
-				cmd.Process.Signal(syscall.SIGKILL)
+				if p, err := os.FindProcess(cmd.Process.Pid); err != nil {
+					kill = append(kill, p)
+				}
+			}
+			for _, p := range kill {
+				log.Printf("dinit: SIGKILL sent to pid %d", p.Pid)
+				p.Signal(syscall.SIGKILL)
 			}
 		}
+	}
+}
+
+func reaper() {
+	for {
+		var wstatus syscall.WaitStatus
+		pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
+		if err != nil {
+			return
+		}
+		log.Printf("dinit: pid %d reaped", pid)
+		zombies.Inc()
 	}
 }
