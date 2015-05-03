@@ -64,8 +64,10 @@ func main() {
 		}()
 	}
 
-	sigs := make(chan os.Signal)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGCHLD)
+	ints := make(chan os.Signal)
+	chld := make(chan os.Signal)
+	signal.Notify(ints, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(chld, syscall.SIGCHLD)
 
 	i := 0
 Wait:
@@ -76,35 +78,30 @@ Wait:
 			if len(cmds) == i {
 				break Wait
 			}
-		case sig := <-sigs:
-			if sig == syscall.SIGCHLD {
-				// If for my own children don't wait here, as we were waiting above.
-				go func() {
-					for {
-						var wstatus syscall.WaitStatus
-						pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
-						if err != nil {
-							return
-						}
-						log.Printf("dinit: pid %d reaped", pid)
-						zombies.Inc()
+		case <-chld:
+			go func() {
+				for {
+					var wstatus syscall.WaitStatus
+					pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
+					if err != nil {
+						return
 					}
-				}()
-				break
-			}
-
+					log.Printf("dinit: pid %d reaped", pid)
+					zombies.Inc()
+				}
+			}()
+		case sig := <-ints:
 			// There is a race here, because the process could have died, we don't care.
 			for _, cmd := range cmds {
 				log.Printf("dinit: signal %d sent to pid %d", sig, cmd.Process.Pid)
 				cmd.Process.Signal(sig)
 			}
 			// TODO(miek): should be conditional, i.e. only kill whats is really left.
-				log.Printf("dinit: SIGKILL remaining processes in %d seconds", sleep)
+			log.Printf("dinit: SIGKILL remaining processes in %d seconds", sleep)
 			time.Sleep(time.Duration(sleep) * time.Second)
 			for _, cmd := range cmds {
 				cmd.Process.Signal(syscall.SIGKILL)
 			}
-			break Wait
 		}
 	}
 }
