@@ -1,7 +1,9 @@
+// Dinit is a mini init replacement useful for use inside Docker containers.
 package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -10,14 +12,35 @@ import (
 	"syscall"
 )
 
+var (
+	port                 int
+	namespace, subsystem string
+)
+
 func main() {
+	flag.IntVar(&port, "port", 0, "port to export metricss for Prometheus")
+	flag.StringVar(&namespace, "namespace", "", "namespace to use for Prometheus")
+	flag.StringVar(&subsystem, "subsystem", "", "subsystem to use for Prometheus")
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... PROGRAM [PROGRAM]...")
+		fmt.Fprintln(os.Stderr, "Start PROGRAMs by passing the enviroment and reap any zombies.\n")
+		flag.PrintDefaults()
+	}
 	flag.Parse()
+
+	if len(flag.Args()) == 0 {
+		log.Fatal("dinit: need at least one program")
+	}
+
+	if port > 0 {
+		metrics()
+	}
+
 	cmds := []*exec.Cmd{}
 	done := make(chan bool)
 
 	for _, arg := range flag.Args() {
-		// Split on spaces and execute.
-		args := strings.Fields(arg)
+		args := strings.Fields(arg) // Split on spaces and execute.
 		cmd := exec.Command(args[0], args[1:]...)
 		cmds = append(cmds, cmd)
 
@@ -62,6 +85,7 @@ Wait:
 						break
 					}
 					log.Printf("dinit: pid %d reaped", pid)
+					zombies.Inc()
 
 				}
 				break
