@@ -8,7 +8,7 @@ int main()
 	pid_t pid;
 	int i;
 
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 100; i++) {
 		// Create child.
 		pid = fork();
 		if (pid > 0) {
