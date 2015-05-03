@@ -10,7 +10,3 @@ created by its children. It will *not* restart any of its children when they die
 If one of the programs fails to start dinit will exit with an error.
 
 If program daemonize dinit will loose track of them.
-
-## TODO
-
-Make a testable and add tests.

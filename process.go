@@ -8,65 +8,32 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 )
 
-// Cmd holds our commands.
-type Cmd struct {
-	sync.RWMutex
-	Cmd map[int]*exec.Cmd
-}
-
-func New() *Cmd { return &Cmd{sync.RWMutex{}, make(map[int]*exec.Cmd)} }
-
-func (c *Cmd) Start(cmd *exec.Cmd) error {
-	c.RWMutex.Lock()
-	defer c.RWMutex.Unlock()
-	err := cmd.Start()
-	if err != nil {
-		c.Cmd[cmd.Process.Pid] = cmd
-	}
-	return err
-}
-
-func (c *Cmd) Stop(pid int) {
-	c.RWMutex.Lock()
-	defer c.RWMutex.Unlock()
-	delete(c.Cmd, pid)
-}
-
-// Child return true is pid is a direct child of ours.
-func (c *Cmd) Child(pid int) bool {
-	if _, ok := c.Cmd[pid]; ok {
-		return true
-	}
-	return false
-}
-
 func main() {
-	restart := flag.Bool("r", false, "restart programs when they die")
 	flag.Parse()
 
-	Cmd := New()
-	done := make(chan int)
-
+	// make map and protect with mutex to keep track of children.
+	cmds := []*exec.Cmd{}
+	done := make(chan []string)
 	for _, arg := range flag.Args() {
 		// Split on spaces and execute. Note that with docker we can only have
 		// one entry point, but we support multiple.
 		args := strings.Fields(arg)
 		cmd := exec.Command(args[0], args[1:]...)
+		cmds = append(cmds, cmd)
 
 		go func() {
-			err := Cmd.Start(cmd)
+			log.Printf("dinit: command [pid %d] started: %v, pid %d", cmd.Process.Pid, cmd.Args)
+			err := cmd.Start()
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Printf("dinit: command [pid %d] started: %v, pid %d", cmd.Process.Pid, cmd.Args)
 
 			err = cmd.Wait()
 			log.Printf("dinit: command [pid %d], finished with error: %v", cmd.Process.Pid, err)
-			done <- cmd.Process.Pid
+			done <- cmd.Args
 		}()
 	}
 
@@ -78,17 +45,15 @@ Wait:
 	for {
 		select {
 		case args := <-done:
-			if *restart {
-
-			}
-			log.Printf("dinit: command [pid %d] finished: %v", 10, args)
+			log.Printf("dinit: coommand finished: %v", args)
 			i++
 			if len(cmds) == i {
 				break Wait
 			}
 		case sig := <-sigs:
 			if sig == syscall.SIGCHLD {
-				// If for my own children don't wait here, as we were waiting above.
+				// If for my own children don't wait here, as we were waiting
+				// above.
 				var wstatus syscall.WaitStatus
 
 				for {
