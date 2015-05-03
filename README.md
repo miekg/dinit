@@ -28,4 +28,5 @@ Do:
 
 # TODO
 
-Tests.
+Go Tests. The docker directory contains some files to run a docker container to test
+a few things.
