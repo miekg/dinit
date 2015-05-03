@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -13,27 +12,29 @@ import (
 
 func main() {
 	flag.Parse()
-
-	// make map and protect with mutex to keep track of children.
 	cmds := []*exec.Cmd{}
-	done := make(chan []string)
+	done := make(chan bool)
+
 	for _, arg := range flag.Args() {
-		// Split on spaces and execute. Note that with docker we can only have
-		// one entry point, but we support multiple.
+		// Split on spaces and execute.
 		args := strings.Fields(arg)
 		cmd := exec.Command(args[0], args[1:]...)
 		cmds = append(cmds, cmd)
 
 		go func() {
-			log.Printf("dinit: command [pid %d] started: %v, pid %d", cmd.Process.Pid, cmd.Args)
 			err := cmd.Start()
 			if err != nil {
 				log.Fatal(err)
 			}
+			log.Printf("dinit: pid %d started: %v", cmd.Process.Pid, cmd.Args)
 
 			err = cmd.Wait()
-			log.Printf("dinit: command [pid %d], finished with error: %v", cmd.Process.Pid, err)
-			done <- cmd.Args
+			if err != nil {
+				log.Printf("dinit: pid %d, finished with error: %s", cmd.Process.Pid, err)
+			} else {
+				log.Printf("dinit: pid %d, finished: %v", cmd.Process.Pid, cmd.Args)
+			}
+			done <- true
 		}()
 	}
 
@@ -44,8 +45,7 @@ func main() {
 Wait:
 	for {
 		select {
-		case args := <-done:
-			log.Printf("dinit: coommand finished: %v", args)
+		case <-done:
 			i++
 			if len(cmds) == i {
 				break Wait
@@ -55,23 +55,21 @@ Wait:
 				// If for my own children don't wait here, as we were waiting
 				// above.
 				var wstatus syscall.WaitStatus
-
 				for {
 					pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
 					if err != nil {
-						fmt.Println("syscall err ", err)
+						log.Printf("dinit: pid %d Wait4 error: %s", pid, err)
 						break
 					}
-
-					fmt.Println("Child PID", pid)
+					log.Printf("dinit: pid %d reaped", pid)
 
 				}
 				break
 			}
 
-			// There is a race here, because the process could have died. We don't care.
+			// There is a race here, because the process could have died, we don't care.
 			for _, cmd := range cmds {
-				log.Printf("dinit: signal %d sent to %d", sig, cmd.Process.Pid)
+				log.Printf("dinit: signal %d sent to pid %d", sig, cmd.Process.Pid)
 				cmd.Process.Signal(sig)
 			}
 		}
