@@ -55,15 +55,13 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			if verbose {
-				log.Printf("dinit: pid %d started: %v", cmd.Process.Pid, cmd.Args)
-			}
+			logf("dinit: pid %d started: %v", cmd.Process.Pid, cmd.Args)
 
 			err = cmd.Wait()
-			if err != nil && verbose {
-				log.Printf("dinit: pid %d, finished with error: %s", cmd.Process.Pid, err)
+			if err != nil {
+				logf("dinit: pid %d, finished with error: %s", cmd.Process.Pid, err)
 			} else {
-				log.Printf("dinit: pid %d, finished: %v", cmd.Process.Pid, cmd.Args)
+				logf("dinit: pid %d, finished: %v", cmd.Process.Pid, cmd.Args)
 			}
 			done <- true
 		}()
@@ -89,9 +87,7 @@ Wait:
 		case sig := <-ints:
 			// There is a race here, because the process could have died, we don't care.
 			for _, cmd := range cmds {
-				if verbose {
-					log.Printf("dinit: signal %d sent to pid %d", sig, cmd.Process.Pid)
-				}
+				logf("dinit: signal %d sent to pid %d", sig, cmd.Process.Pid)
 				cmd.Process.Signal(sig)
 			}
 
@@ -104,7 +100,7 @@ Wait:
 				}
 			}
 			for _, p := range kill {
-				log.Printf("dinit: SIGKILL sent to pid %d", p.Pid)
+				logf("dinit: SIGKILL sent to pid %d", p.Pid)
 				p.Signal(syscall.SIGKILL)
 			}
 		}
@@ -118,11 +114,16 @@ func reaper() {
 		if err != nil {
 			return
 		}
-		if verbose {
-			log.Printf("dinit: pid %d reaped", pid)
-		}
+		logf("dinit: pid %d reaped", pid)
 		zombies.Inc()
 	}
+}
+
+func logf(format string, v ...interface{}) {
+	if !verbose {
+		return
+	}
+	log.Printf("dinit: " + format, v...)
 }
 
 func envBool(k string, d bool) bool {
