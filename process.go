@@ -25,7 +25,7 @@ func main() {
 	flag.IntVar(&sleep, "sleep", envInt("DINIT_SLEEP", 5), "how many seconds to sleep before force killing programs (DINIT_SLEEP)")
 	flag.StringVar(&namespace, "namespace", envString("DINIT_NAMESPACE", ""), "namespace to use for prometheus (DINIT_NAMESPACE)")
 	flag.StringVar(&subsystem, "subsystem", envString("DINIT_SUBSYSTEM", ""), "subsystem to use for prometheus (DINIT_SUBSYSTEM)")
-	flag.BoolVar(&verbose, "verbose", envBool("DINIT_VERBOSE", false), "be more verbose (DINIT_VERBOSE)")
+	flag.BoolVar(&verbose, "verbose", envBool("DINIT_VERBOSE", false), "be more verbose and show stdout/stderr of programs (DINIT_VERBOSE)")
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... PROGRAM [PROGRAM]...")
@@ -51,8 +51,10 @@ func main() {
 		cmds = append(cmds, cmd)
 
 		go func() {
+			if verbose {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
+		}
 
 			err := cmd.Start()
 			if err != nil {
