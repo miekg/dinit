@@ -1,6 +1,6 @@
 # Dinit
 
-Docker-init is a small init-like "daemon" (it is not a daemon) useful for use
+Docker-init is a small init-like "daemon" (it is not a daemon) for use
 within Docker containers. It is partly inspired by
 [my_init](https://github.com/phusion/baseimage-docker/blob/master/image/bin/my_init).
 
@@ -9,7 +9,7 @@ It will pass signals through to the children it is managing. It will reap any zo
 created by its children. It will *not* restart any of its children if they die.
 
 If one of the programs fails to start dinit will exit with an error. If programs
-daemonize dinit will loose track of them.
+daemonize dinit will lose track of them.
 
 [Prometheus](http://prometheus.io/) is supported to scrape the number of zombies
 (zombies_reaped), but only if -port > 0.
