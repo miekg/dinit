@@ -5,8 +5,12 @@ dinit:
 	cp ../dinit .
 
 .PHONY:
-image: zombie dinit
+build: zombie dinit
 	docker build -t $$LOGNAME/dinit .
+
+.PHONY:
+rmi:
+	docker rmi -f $$LOGNAME/dinit:latest
 
 .PHONY:
 clean:
