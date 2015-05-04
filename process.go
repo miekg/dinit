@@ -51,10 +51,14 @@ func main() {
 		cmds = append(cmds, cmd)
 
 		go func() {
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
 			err := cmd.Start()
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			logf("dinit: pid %d started: %v", cmd.Process.Pid, cmd.Args)
 
 			err = cmd.Wait()
@@ -123,7 +127,7 @@ func logf(format string, v ...interface{}) {
 	if !verbose {
 		return
 	}
-	log.Printf("dinit: " + format, v...)
+	log.Printf("dinit: "+format, v...)
 }
 
 func envBool(k string, d bool) bool {
