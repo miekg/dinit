@@ -52,9 +52,9 @@ func main() {
 
 		go func() {
 			if verbose {
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-		}
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+			}
 
 			err := cmd.Start()
 			if err != nil {
