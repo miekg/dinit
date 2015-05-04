@@ -6,7 +6,7 @@ dinit:
 
 .PHONY:
 build: zombie dinit
-	docker build -t $$LOGNAME/dinit .
+	docker build -t $$LOGNAME/dinit . && docker images
 
 .PHONY:
 rmi:
