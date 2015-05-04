@@ -1,4 +1,4 @@
-FROM accursoft/micro-jessie
+FROM progrium/busybox
 MAINTAINER Miek Gieben <miek@miek.nl> (@miekg)
 
 ADD dinit dinit
