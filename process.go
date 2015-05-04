@@ -73,6 +73,7 @@ func main() {
 	signal.Notify(chld, syscall.SIGCHLD)
 
 	i := 0
+	defer reaper()
 Wait:
 	for {
 		select {
@@ -81,7 +82,6 @@ Wait:
 		case <-done:
 			i++
 			if len(cmds) == i {
-				reaper()
 				break Wait
 			}
 		case sig := <-ints:
