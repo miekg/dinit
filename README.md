@@ -11,9 +11,6 @@ created by its children. It will *not* restart any of its children if they die.
 If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
 
-[Prometheus](http://prometheus.io/) is supported to scrape the number of zombies
-(zombies_reaped), but only if -port > 0.
-
 # Why?
 
 See <https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/>.

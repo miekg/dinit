@@ -15,16 +15,11 @@ import (
 )
 
 var (
-	verbose              bool
-	port, sleep          int
-	namespace, subsystem string
+	verbose bool
+	sleep   int
 )
 
 func main() {
-	flag.IntVar(&port, "port", envInt("DINIT_PORT", 0), "port to export metricss for prometheus (DINIT_PORT)")
-	flag.IntVar(&sleep, "sleep", envInt("DINIT_SLEEP", 5), "how many seconds to sleep before force killing programs (DINIT_SLEEP)")
-	flag.StringVar(&namespace, "namespace", envString("DINIT_NAMESPACE", ""), "namespace to use for prometheus (DINIT_NAMESPACE)")
-	flag.StringVar(&subsystem, "subsystem", envString("DINIT_SUBSYSTEM", ""), "subsystem to use for prometheus (DINIT_SUBSYSTEM)")
 	flag.BoolVar(&verbose, "verbose", envBool("DINIT_VERBOSE", false), "be more verbose and show stdout/stderr of programs (DINIT_VERBOSE)")
 
 	flag.Usage = func() {
@@ -36,10 +31,6 @@ func main() {
 
 	if len(flag.Args()) == 0 {
 		log.Fatal("dinit: need at least one program")
-	}
-
-	if port > 0 {
-		metrics()
 	}
 
 	cmds := []*exec.Cmd{}
@@ -121,7 +112,6 @@ func reaper() {
 			return
 		}
 		logf("dinit: pid %d reaped", pid)
-		zombies.Inc()
 	}
 }
 
