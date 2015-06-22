@@ -23,6 +23,13 @@ Do:
     ADD dinit dinit
     ENTRYPOINT ["/dinit", "/bin/sleep 80"]
 
+The last command in the list given to `dinit` will *also* get the arguments given
+to `docker run`, so the above sleep can be rewritten like:
+
+    ENTRYPOINT ["/dinit", "/bin/sleep"]
+
+And then call `docker run .... 80`
+
 # TODO
 
 Go Tests. The docker directory contains some files to run a docker container to
