@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -15,21 +16,30 @@ import (
 
 var (
 	verbose bool
-	sleep   int
+	timeout time.Duration
+	maxproc float64
 )
 
 func main() {
 	flag.BoolVar(&verbose, "verbose", envBool("DINIT_VERBOSE", false), "be more verbose and show stdout/stderr of programs (DINIT_VERBOSE)")
+	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
+	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROC to os.NumCPU * maxproc, when 0.0 use GOMAXPROCS")
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... PROGRAM [PROGRAM]...")
-		fmt.Fprintln(os.Stderr, "Start PROGRAMs by passing the enviroment and reap any zombies.\n")
+		fmt.Fprintln(os.Stderr, "Start PROGRAMs by passing the environment and reap any zombies.\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 
 	if len(flag.Args()) == 0 {
 		log.Fatal("dinit: need at least one program")
+	}
+
+	if maxproc > 0.0 {
+		numcpu := strconv.Itoa(math.Ceil(os.NumCPU() * maxproc))
+		log.Printf("dinit: using %d as GOMAXPROCS", numcpu)
+		os.Setenv("GOMAXPROCS", numcpu)
 	}
 
 	cmds := []*exec.Cmd{}
@@ -87,7 +97,7 @@ Wait:
 				cmd.Process.Signal(sig)
 			}
 
-			time.Sleep(time.Duration(sleep) * time.Second)
+			time.Sleep(timeout)
 
 			kill := []*os.Process{}
 			for _, cmd := range cmds {

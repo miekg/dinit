@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func envBool(k string, d bool) bool {
@@ -23,6 +24,16 @@ func envInt(k string, d int) int {
 	if x != "" {
 		if x1, e := strconv.Atoi(x); e != nil {
 			return x1
+		}
+	}
+	return d
+}
+
+func envDuration(k string, d time.Duration) time.Duration {
+	x := os.Getenv(k)
+	if x != "" {
+		if x1, e := strconv.Atoi(x); e != nil {
+			return time.Duration(x1) * time.Second
 		}
 	}
 	return d
