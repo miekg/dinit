@@ -103,6 +103,10 @@ func wait(done chan bool, cmds []*exec.Cmd) {
 		select {
 		case <-chld:
 			go reaper()
+			i++
+			if len(cmds) == i {
+				return
+			}
 		case <-done:
 			i++
 			if len(cmds) == i {
@@ -115,13 +119,17 @@ func wait(done chan bool, cmds []*exec.Cmd) {
 				cmd.Process.Signal(sig)
 			}
 
-			time.Sleep(timeout)
+			time.Sleep(time.Second)
 
 			kill := []*os.Process{}
 			for _, cmd := range cmds {
 				if p, err := os.FindProcess(cmd.Process.Pid); err != nil {
 					kill = append(kill, p)
 				}
+			}
+
+			if len(kill) > 0 {
+				time.Sleep(timeout)
 			}
 			for _, p := range kill {
 				logF("SIGKILL sent to pid %d", p.Pid)
