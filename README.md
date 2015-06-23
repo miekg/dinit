@@ -1,5 +1,11 @@
 # Dinit
 
+## Synopsis
+
+    ./dinit [OPTIONS] CMD [CMD...]
+
+## Description
+
 Docker-init is a small init-like "daemon" (it is not a daemon) for use
 within Docker containers. It is partly inspired by
 [my_init](https://github.com/phusion/baseimage-docker/blob/master/image/bin/my_init).
@@ -30,11 +36,17 @@ to `docker run`, so the above sleep can be rewritten like:
 
 And then call `docker run .... 80`
 
+## Options
+
+## Examples
+
+## See also
+
 # TODO
 
 Go Tests. The docker directory contains some files to run a docker container to
 test a few things.
 
-# Misc
+## Misc
 
 Build with `go build -ldflags -s` to reduce the size a bit.
