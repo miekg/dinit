@@ -25,7 +25,7 @@ var (
 func main() {
 	flag.BoolVar(&verbose, "verbose", envBool("DINIT_VERBOSE", false), "be more verbose and show stdout/stderr of commands (DINIT_VERBOSE)")
 	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
-	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROC to os.NumCPU * maxproc, when 0.0 use GOMAXPROCS")
+	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROC to runtime.NumCPU() * maxproc, when 0.0 use GOMAXPROCS")
 	flag.StringVar(&start, "start", "", "command to run during startup, non-zero exit status abort dinit")
 	flag.StringVar(&stop, "stop", "", "command to run during teardown")
 
