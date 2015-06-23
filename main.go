@@ -44,7 +44,7 @@ func main() {
 
 	if maxproc > 0.0 {
 		numcpu := strconv.Itoa(int(math.Ceil(float64(runtime.NumCPU()) * maxproc)))
-		logF("using %s as GOMAXPROCS", numcpu)
+		logPrintf("using %s as GOMAXPROCS", numcpu)
 		os.Setenv("GOMAXPROCS", numcpu)
 	}
 
@@ -71,16 +71,16 @@ func run(args []string) {
 			logFatalf("%s", err)
 		}
 
-		logF("pid %d started: %v", cmd.Process.Pid, cmd.Args)
+		logPrintf("pid %d started: %v", cmd.Process.Pid, cmd.Args)
 
 		cmds.Insert(cmd)
 
 		go func() {
 			err := cmd.Wait()
 			if err != nil {
-				logF("pid %d, finished: %v with error: %s", cmd.Process.Pid, cmd.Args, err)
+				logPrintf("pid %d, finished: %v with error: %s", cmd.Process.Pid, cmd.Args, err)
 			} else {
-				logF("pid %d, finished: %v", cmd.Process.Pid, cmd.Args)
+				logPrintf("pid %d, finished: %v", cmd.Process.Pid, cmd.Args)
 			}
 			cmds.Remove(cmd)
 		}()
@@ -106,14 +106,14 @@ func wait() {
 				return
 			}
 		case sig := <-other:
-			cmd.Signal(sig)
+			cmds.Signal(sig)
 		case sig := <-ints:
 			cmds.Signal(sig)
 
 			time.Sleep(2 * time.Second)
 
 			if cmds.Len() > 0 {
-				logF("%d processes still alive after SIGINT/SIGTERM", cmds.Len())
+				logPrintf("%d processes still alive after SIGINT/SIGTERM", cmds.Len())
 				time.Sleep(timeout)
 			}
 			cmds.Signal(syscall.SIGKILL)
@@ -121,13 +121,5 @@ func wait() {
 	}
 }
 
-func logF(format string, v ...interface{}) {
-	if !verbose {
-		return
-	}
-	log.Printf("dinit: "+format, v...)
-}
-
-func logFatalf(format string, v ...interface{}) {
-	log.Fatalf("dinit: "+format, v...)
-}
+func logPrintf(format string, v ...interface{}) { log.Printf("dinit: "+format, v...) }
+func logFatalf(format string, v ...interface{}) { log.Fatalf("dinit: "+format, v...) }
