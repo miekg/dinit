@@ -57,10 +57,17 @@ func main() {
 		defer stopcmd.Run()
 	}
 
-	cmds := []*exec.Cmd{}
 	done := make(chan bool)
+	cmds := run(flag.Args(), done)
 
-	for _, arg := range flag.Args() {
+	defer reaper()
+
+	wait(done, cmds)
+}
+
+func run(args []string, done chan bool) []*exec.Cmd {
+	cmds := []*exec.Cmd{}
+	for _, arg := range args {
 		cmd := command(arg)
 		cmds = append(cmds, cmd)
 
@@ -80,15 +87,18 @@ func main() {
 			done <- true
 		}()
 	}
+	return cmds
+}
+
+// wait waits for commands to finish.
+func wait(done chan bool, cmds []*exec.Cmd) {
+	i := 0
 
 	ints := make(chan os.Signal)
 	chld := make(chan os.Signal)
 	signal.Notify(ints, syscall.SIGINT, syscall.SIGTERM)
 	signal.Notify(chld, syscall.SIGCHLD)
 
-	i := 0
-	defer reaper()
-Wait:
 	for {
 		select {
 		case <-chld:
@@ -96,7 +106,7 @@ Wait:
 		case <-done:
 			i++
 			if len(cmds) == i {
-				break Wait
+				return
 			}
 		case sig := <-ints:
 			// There is a race here, because the process could have died, we don't care.
