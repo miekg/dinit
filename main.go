@@ -7,7 +7,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"os/exec"
 	"os/signal"
 	"runtime"
 	"strconv"
@@ -20,6 +19,8 @@ var (
 	timeout     time.Duration
 	maxproc     float64
 	start, stop string
+
+	cmds = NewCommands()
 )
 
 func main() {
@@ -57,96 +58,58 @@ func main() {
 		defer stopcmd.Run()
 	}
 
-	done := make(chan bool)
-	cmds := run(flag.Args(), done)
-
-	defer reaper()
-
-	wait(done, cmds)
+	run(flag.Args())
+	wait()
 }
 
-func run(args []string, done chan bool) []*exec.Cmd {
-	cmds := []*exec.Cmd{}
+func run(args []string) {
 	for _, arg := range args {
 		cmd := command(arg)
-		cmds = append(cmds, cmd)
+		if err := cmd.Start(); err != nil {
+			logFatalf("%s", err)
+		}
+
+		logF("pid %d started: %v", cmd.Process.Pid, cmd.Args)
+
+		cmds.Insert(cmd)
 
 		go func() {
-			if err := cmd.Start(); err != nil {
-				logFatalf("%s", err)
-			}
-
-			logF("pid %d started: %v", cmd.Process.Pid, cmd.Args)
-
 			err := cmd.Wait()
 			if err != nil {
-				logF("pid %d, finished with error: %s", cmd.Process.Pid, err)
+				logF("pid %d, finished: %v with error: %s", cmd.Process.Pid, cmd.Args, err)
 			} else {
 				logF("pid %d, finished: %v", cmd.Process.Pid, cmd.Args)
 			}
-			done <- true
+			cmds.Remove(cmd)
 		}()
 	}
-	return cmds
+	return
 }
 
 // wait waits for commands to finish.
-func wait(done chan bool, cmds []*exec.Cmd) {
-	i := 0
+func wait() {
 
 	ints := make(chan os.Signal)
-	chld := make(chan os.Signal)
 	signal.Notify(ints, syscall.SIGINT, syscall.SIGTERM)
-	signal.Notify(chld, syscall.SIGCHLD)
+	tick := time.Tick(100 * time.Millisecond) // 0.1 sec
 
 	for {
 		select {
-		case <-chld:
-			go reaper()
-			i++
-			if len(cmds) == i {
-				return
-			}
-		case <-done:
-			i++
-			if len(cmds) == i {
+		case <-tick:
+			if cmds.Len() == 0 {
 				return
 			}
 		case sig := <-ints:
-			// There is a race here, because the process could have died, we don't care.
-			for _, cmd := range cmds {
-				logF("signal %d sent to pid %d", sig, cmd.Process.Pid)
-				cmd.Process.Signal(sig)
-			}
+			cmds.Signal(sig)
 
-			time.Sleep(time.Second)
+			time.Sleep(2 * time.Second)
 
-			kill := []*os.Process{}
-			for _, cmd := range cmds {
-				if p, err := os.FindProcess(cmd.Process.Pid); err != nil {
-					kill = append(kill, p)
-				}
-			}
-
-			if len(kill) > 0 {
+			if cmds.Len() > 0 {
+				logF("%d processes still alive after SIGINT", cmds.Len())
 				time.Sleep(timeout)
 			}
-			for _, p := range kill {
-				logF("SIGKILL sent to pid %d", p.Pid)
-				p.Signal(syscall.SIGKILL)
-			}
+			cmds.Signal(syscall.SIGKILL)
 		}
-	}
-}
-
-func reaper() {
-	for {
-		var wstatus syscall.WaitStatus
-		pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
-		if err != nil {
-			return
-		}
-		logF("pid %d reaped", pid)
 	}
 }
 
