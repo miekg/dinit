@@ -33,6 +33,7 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... CMD [CMD]...")
 		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment and reap any zombies.\n")
+		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to CMDs.")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -92,6 +93,10 @@ func wait() {
 
 	ints := make(chan os.Signal)
 	signal.Notify(ints, syscall.SIGINT, syscall.SIGTERM)
+
+	other := make(chan os.Signal)
+	signal.Notify(other, syscall.SIGHUP)
+
 	tick := time.Tick(100 * time.Millisecond) // 0.1 sec
 
 	for {
@@ -100,13 +105,15 @@ func wait() {
 			if cmds.Len() == 0 {
 				return
 			}
+		case sig := <-other:
+			cmd.Signal(sig)
 		case sig := <-ints:
 			cmds.Signal(sig)
 
 			time.Sleep(2 * time.Second)
 
 			if cmds.Len() > 0 {
-				logF("%d processes still alive after SIGINT", cmds.Len())
+				logF("%d processes still alive after SIGINT/SIGTERM", cmds.Len())
 				time.Sleep(timeout)
 			}
 			cmds.Signal(syscall.SIGKILL)
