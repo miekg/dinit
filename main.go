@@ -43,7 +43,7 @@ func main() {
 
 	if maxproc > 0.0 {
 		numcpu := strconv.Itoa(int(math.Ceil(float64(runtime.NumCPU()) * maxproc)))
-		logF("using %d as GOMAXPROCS", numcpu)
+		logF("using %s as GOMAXPROCS", numcpu)
 		os.Setenv("GOMAXPROCS", numcpu)
 	}
 
@@ -62,6 +62,7 @@ func main() {
 	wait()
 }
 
+// run runs the commands as given on the commandline.
 func run(args []string) {
 	for _, arg := range args {
 		cmd := command(arg)

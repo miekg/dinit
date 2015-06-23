@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// Commands holds the processes that we run.
 type Commands struct {
 	sync.RWMutex
 	pids map[int]*exec.Cmd
@@ -30,6 +31,7 @@ func (c *Commands) Remove(cmd *exec.Cmd) {
 	delete(c.pids, cmd.Process.Pid)
 }
 
+// Signal sends sig to all processes in Commands.
 func (c *Commands) Signal(sig os.Signal) {
 	c.RLock()
 	defer c.RUnlock()
@@ -39,11 +41,12 @@ func (c *Commands) Signal(sig os.Signal) {
 	}
 }
 
+// Len returns the number of processs in Commands.
 func (c *Commands) Len() int {
 	return len(c.pids)
 }
 
-// command parses arg and return an *exec.Cmd that is ready to be run.
+// command parses arg and returns an *exec.Cmd that is ready to be run.
 func command(arg string) *exec.Cmd {
 	args := strings.Fields(arg) // Split on spaces and execute.
 	cmd := exec.Command(args[0], args[1:]...)
