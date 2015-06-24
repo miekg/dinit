@@ -16,12 +16,15 @@ import (
 
 var (
 	verbose     bool
+	test        bool
 	timeout     time.Duration
 	maxproc     float64
 	start, stop string
 
 	cmds = NewCommands()
 )
+
+const testPid = 123
 
 func main() {
 	flag.BoolVar(&verbose, "verbose", envBool("DINIT_VERBOSE", false), "be more verbose and show stdout/stderr of commands (DINIT_VERBOSE)")
@@ -75,16 +78,21 @@ func run(args []string) {
 			logFatalf("%s", err)
 		}
 
-		logPrintf("pid %d started: %v", cmd.Process.Pid, cmd.Args)
+		if test {
+			logPrintf("pid %d started: %v", testPid, cmd.Args)
+
+		} else {
+			logPrintf("pid %d started: %v", cmd.Process.Pid, cmd.Args)
+		}
 
 		cmds.Insert(cmd)
 
 		go func() {
 			err := cmd.Wait()
-			if err != nil {
-				logPrintf("pid %d, finished: %v with error: %s", cmd.Process.Pid, cmd.Args, err)
+			if test {
+				logPrintf("pid %d, finished: %v with error: %v", testPid, cmd.Args, err)
 			} else {
-				logPrintf("pid %d, finished: %v", cmd.Process.Pid, cmd.Args)
+				logPrintf("pid %d, finished: %v with error: %v", cmd.Process.Pid, cmd.Args, err)
 			}
 			cmds.Remove(cmd)
 		}()
@@ -127,5 +135,14 @@ func wait() {
 	}
 }
 
-func logPrintf(format string, v ...interface{}) { log.Printf("dinit: "+format, v...) }
-func logFatalf(format string, v ...interface{}) { log.Fatalf("dinit: "+format, v...) }
+func logPrintf(format string, v ...interface{}) {
+	if test {
+		fmt.Printf("dinit: "+format+"\n", v...)
+		return
+	}
+	log.Printf("dinit: "+format, v...)
+}
+
+func logFatalf(format string, v ...interface{}) {
+	log.Fatalf("dinit: "+format, v...)
+}
