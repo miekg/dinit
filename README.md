@@ -10,9 +10,8 @@ Docker-init is a small init-like "daemon" (it is not a daemon) for use within
 Docker containers.
 
 Dinit will pass any environment variables through to the programs it is
-starting. It will pass signals (SIGHUP, SIGTERM and SIGKILL) through to the
-children it is managing. It will reap any zombies created by its children. It
-will *not* restart any of its children if they die.
+starting. It will pass signals (SIGHUP, SIGTERM and SIGINT) through to the
+children it is managing. It will *not* restart any of its children if they die.
 
 If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
