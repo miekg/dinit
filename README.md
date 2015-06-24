@@ -28,6 +28,12 @@ Do:
     ADD dinit dinit
     ENTRYPOINT ["/dinit", "/bin/sleep 80"]
 
+or
+
+    ENTRYPOINT ["/dinit", "/bin/sleep $TIMEOUT"]
+
+Where `$TIMEOUT` will be expanded by `dinit` itself.
+
 The last command in the list given to `dinit` will *also* get the arguments given
 to `docker run`, so the above sleep can be rewritten like:
 
@@ -52,7 +58,3 @@ And then call `docker run .... 80`
 
 Dinit is partly inspired by
 [my_init](https://github.com/phusion/baseimage-docker/blob/master/image/bin/my_init).
-
-## Misc
-
-Build with `go build -ldflags -s` to reduce the size a bit.
