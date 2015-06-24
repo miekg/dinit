@@ -95,6 +95,8 @@ func run(args []string) {
 // wait waits for commands to finish.
 func wait() {
 
+	defer func() { logPrintf("all processes exited, goodbye!") }()
+
 	ints := make(chan os.Signal)
 	signal.Notify(ints, syscall.SIGINT, syscall.SIGTERM)
 
