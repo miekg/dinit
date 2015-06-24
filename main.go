@@ -35,8 +35,8 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... CMD [CMD]...")
-		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment and reap any zombies.\n")
-		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to CMDs.")
+		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment and reap any zombies.")
+		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to CMDs.\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
