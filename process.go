@@ -36,7 +36,11 @@ func (c *Commands) Signal(sig os.Signal) {
 	c.RLock()
 	defer c.RUnlock()
 	for pid, cmd := range c.pids {
-		logPrintf("signal %d sent to pid %d", sig, pid)
+		if test {
+			logPrintf("signal %d sent to pid %d", sig, testPid)
+		} else {
+			logPrintf("signal %d sent to pid %d", sig, pid)
+		}
 		cmd.Process.Signal(sig)
 	}
 }
