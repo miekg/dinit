@@ -45,7 +45,7 @@ And then call `docker run .... 80`
 
 * `maxproc`: set GOMAXPROCS to the number of CPUs on the host multiplied my `maxproc`, typical
   values are 0.5 or 1.0. When 0.0 `dinit` will not set GOMAXPROCS by itself. If GOMAXPROCS is
-  *already* this does nothing.
+  *already* set in the environment this does nothing.
 * `start`: run a command when starting up. On any failure, `dinit` exits.
 * `stop`: run command on exit.
 * `timeout`: time in seconds before SIGKILL is send after the SIGTERM has been sent.
