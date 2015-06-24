@@ -53,6 +53,13 @@ func (c *Commands) Len() int {
 // command parses arg and returns an *exec.Cmd that is ready to be run.
 func command(arg string) *exec.Cmd {
 	args := strings.Fields(arg) // Split on spaces and execute.
+	// Loop to check for env vars
+	for i, a := range args {
+		if isEnv(a) {
+			args[i] = os.ExpandEnv(a)
+		}
+	}
+
 	cmd := exec.Command(args[0], args[1:]...)
 	if verbose {
 		cmd.Stdout = os.Stdout
