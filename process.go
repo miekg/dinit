@@ -47,6 +47,8 @@ func (c *Commands) Signal(sig os.Signal) {
 
 // Len returns the number of processs in Commands.
 func (c *Commands) Len() int {
+	c.RLock()
+	defer c.RUnlock()
 	return len(c.pids)
 }
 
