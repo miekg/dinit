@@ -16,10 +16,11 @@ import (
 
 var (
 	verbose     bool
-	test        bool
 	timeout     time.Duration
 	maxproc     float64
 	start, stop string
+
+	test        bool
 
 	cmds = NewCommands()
 )
@@ -80,7 +81,6 @@ func run(args []string) {
 
 		if test {
 			logPrintf("pid %d started: %v", testPid, cmd.Args)
-
 		} else {
 			logPrintf("pid %d started: %v", cmd.Process.Pid, cmd.Args)
 		}
@@ -102,7 +102,6 @@ func run(args []string) {
 
 // wait waits for commands to finish.
 func wait() {
-
 	defer func() { logPrintf("all processes exited, goodbye!") }()
 
 	ints := make(chan os.Signal)
