@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
 )
 
 // Commands holds the processes that we run.
@@ -43,6 +45,20 @@ func (c *Commands) Signal(sig os.Signal) {
 		}
 		cmd.Process.Signal(sig)
 	}
+}
+
+// Cleanup will send signal sig to the commands and after a short time send
+// a SIGKKILL.
+func (c *Commands) Cleanup(sig os.Signal) {
+	cmds.Signal(sig)
+
+	time.Sleep(2 * time.Second)
+
+	if cmds.Len() > 0 {
+		logPrintf("%d processes still alive after SIGINT/SIGTERM", cmds.Len())
+		time.Sleep(timeout)
+	}
+	cmds.Signal(syscall.SIGKILL)
 }
 
 // Len returns the number of processs in Commands.

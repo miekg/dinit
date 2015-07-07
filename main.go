@@ -20,7 +20,7 @@ var (
 	maxproc     float64
 	start, stop string
 
-	test        bool
+	test bool
 
 	cmds = NewCommands()
 )
@@ -73,10 +73,23 @@ func main() {
 
 // run runs the commands as given on the commandline.
 func run(args []string) {
+	cargs := []string{}
 	for _, arg := range args {
+		switch arg {
+		case "-verbose":
+			logPrintf("interpreted as a flag: %s", arg)
+			flag.Set("verbose", "true")
+			continue
+		}
+		cargs = append(cargs, arg)
+	}
+
+	for _, arg := range cargs {
 		cmd := command(arg)
 		if err := cmd.Start(); err != nil {
-			logFatalf("%s", err)
+			logPrintf("%s", err)
+			cmds.Cleanup(syscall.SIGINT)
+			return
 		}
 
 		if test {
@@ -121,15 +134,7 @@ func wait() {
 		case sig := <-other:
 			cmds.Signal(sig)
 		case sig := <-ints:
-			cmds.Signal(sig)
-
-			time.Sleep(2 * time.Second)
-
-			if cmds.Len() > 0 {
-				logPrintf("%d processes still alive after SIGINT/SIGTERM", cmds.Len())
-				time.Sleep(timeout)
-			}
-			cmds.Signal(syscall.SIGKILL)
+			cmds.Cleanup(sig)
 		}
 	}
 }
