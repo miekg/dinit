@@ -39,6 +39,7 @@ func ExampleRun() {
 	run([]string{"echo Hi"})
 	wait()
 	// Output: dinit: pid 123 started: [echo Hi]
+	// Hi
 	// dinit: pid 123, finished: [echo Hi] with error: <nil>
 	// dinit: all processes exited, goodbye!
 }

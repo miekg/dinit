@@ -79,9 +79,7 @@ func command(arg string) *exec.Cmd {
 	}
 
 	cmd := exec.Command(args[0], args[1:]...)
-	if verbose {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	return cmd
 }

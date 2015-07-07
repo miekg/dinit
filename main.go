@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	verbose     bool
 	timeout     time.Duration
 	maxproc     float64
 	start, stop string
@@ -28,7 +27,6 @@ var (
 const testPid = 123
 
 func main() {
-	flag.BoolVar(&verbose, "verbose", envBool("DINIT_VERBOSE", false), "be more verbose and show stdout/stderr of commands (DINIT_VERBOSE)")
 	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
 	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROCS to runtime.NumCPU() * maxproc, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", "", "command to run during startup, non-zero exit status abort dinit")
@@ -73,18 +71,7 @@ func main() {
 
 // run runs the commands as given on the commandline.
 func run(args []string) {
-	cargs := []string{}
 	for _, arg := range args {
-		switch arg {
-		case "-verbose":
-			logPrintf("interpreted as a flag: %s", arg)
-			flag.Set("verbose", "true")
-			continue
-		}
-		cargs = append(cargs, arg)
-	}
-
-	for _, arg := range cargs {
 		cmd := command(arg)
 		if err := cmd.Start(); err != nil {
 			logPrintf("%s", err)
