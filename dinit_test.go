@@ -36,11 +36,10 @@ func TestEnv(t *testing.T) {
 func ExampleRun() {
 	test = true
 
-	run([]string{"echo Hi"})
+	run([]string{"cat /dev/null"})
 	wait()
-	// Output: dinit: pid 123 started: [echo Hi]
-	// Hi
-	// dinit: pid 123, finished: [echo Hi] with error: <nil>
+	// Output: dinit: pid 123 started: [cat /dev/null]
+	// dinit: pid 123, finished: [cat /dev/null] with error: <nil>
 	// dinit: all processes exited, goodbye!
 }
 
@@ -67,5 +66,21 @@ func ExampleFailToStart() {
 	// dinit: exec: "verbose": executable file not found in $PATH
 	// dinit: signal 2 sent to pid 123
 	// dinit: pid 123, finished: [sleep 10] with error: signal: interrupt
+	// dinit: all processes exited, goodbye!
+}
+
+// Test is flaky because the ordering of the output is not fixed.
+func examplePrimary() {
+	test = true
+	run([]string{"cat /dev/zero", "less -f /dev/zero", "killall -SEGV cat"})
+	wait()
+	// Output: dinit: pid 123 started: [cat /dev/zero]
+	// dinit: pid 123 started: [less -f /dev/zero]
+	// dinit: pid 123, finished: [cat /dev/zero] with error: signal: segmentation fault
+	// dinit: pid 123 was primary, signalling other processes
+	// dinit: signal 2 sent to pid 123
+	// dinit: pid 123 started: [killall -SEGV cat]
+	// dinit: pid 123, finished: [killall -SEGV cat] with error: <nil>
+	// dinit: pid 123, finished: [less -f /dev/zero] with error: signal: interrupt
 	// dinit: all processes exited, goodbye!
 }

@@ -9,6 +9,30 @@ import (
 	"time"
 )
 
+// Primary holds which pid is considered the primary process. If that
+// dies, the whole container should be killed.
+type Primary struct {
+	sync.RWMutex
+	first map[int]bool
+}
+
+func NewPrimary() *Primary {
+	return &Primary{first: make(map[int]bool)}
+}
+
+func (p *Primary) Set(pid int) {
+	p.Lock()
+	defer p.Unlock()
+	p.first[pid] = true
+}
+
+func (p *Primary) Primary(pid int) bool {
+	p.RLock()
+	defer p.RUnlock()
+	_, ok := p.first[pid]
+	return ok
+}
+
 // Commands holds the processes that we run.
 type Commands struct {
 	sync.RWMutex
@@ -16,9 +40,7 @@ type Commands struct {
 }
 
 func NewCommands() *Commands {
-	c := new(Commands)
-	c.pids = make(map[int]*exec.Cmd)
-	return c
+	return &Commands{pids: make(map[int]*exec.Cmd)}
 }
 
 func (c *Commands) Insert(cmd *exec.Cmd) {

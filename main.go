@@ -19,9 +19,10 @@ var (
 	maxproc     float64
 	start, stop string
 
-	test bool
+	test bool // only used then testing
 
 	cmds = NewCommands()
+	prim = NewPrimary()
 )
 
 const testPid = 123
@@ -69,32 +70,39 @@ func main() {
 	wait()
 }
 
-// run runs the commands as given on the commandline.
+// run runs the commands as given on the command line.
 func run(args []string) {
-	for _, arg := range args {
+	for i, arg := range args {
 		cmd := command(arg)
 		if err := cmd.Start(); err != nil {
 			logPrintf("%s", err)
 			cmds.Cleanup(syscall.SIGINT)
 			return
 		}
-
-		if test {
-			logPrintf("pid %d started: %v", testPid, cmd.Args)
-		} else {
-			logPrintf("pid %d started: %v", cmd.Process.Pid, cmd.Args)
+		if i == 0 {
+			prim.Set(cmd.Process.Pid)
 		}
+
+		pid := cmd.Process.Pid
+		if test {
+			pid = testPid
+		}
+		logPrintf("pid %d started: %v", pid, cmd.Args)
 
 		cmds.Insert(cmd)
 
 		go func() {
 			err := cmd.Wait()
+			pid := cmd.Process.Pid
 			if test {
-				logPrintf("pid %d, finished: %v with error: %v", testPid, cmd.Args, err)
-			} else {
-				logPrintf("pid %d, finished: %v with error: %v", cmd.Process.Pid, cmd.Args, err)
+				pid = testPid
 			}
+			logPrintf("pid %d, finished: %v with error: %v", pid, cmd.Args, err)
 			cmds.Remove(cmd)
+			if prim.Primary(cmd.Process.Pid) && cmds.Len() > 0 {
+				logPrintf("pid %d was primary, signalling other processes", pid)
+				cmds.Cleanup(syscall.SIGINT)
+			}
 		}()
 	}
 	return
