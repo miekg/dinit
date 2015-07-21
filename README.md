@@ -53,7 +53,6 @@ And then call `docker run .... 80`
 * `start`: run a command when starting up. On any failure, `dinit` exits.
 * `stop`: run command on exit.
 * `timeout`: time in seconds before SIGKILL is send after the SIGTERM has been sent.
-* `verbose`: be more verbose and show standard output and error of the commands.
 
 ## Examples
 
