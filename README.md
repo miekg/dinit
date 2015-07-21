@@ -16,6 +16,10 @@ children it is managing. It will *not* restart any of its children if they die.
 If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
 
+Docker-init has the concept of a *primary* process which is the *first* process
+listed. If that process dies Docker-init will kill the remaining processes and
+exit. This allows for cleanups and container restarts.
+
 ### Why?
 
 See <https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/>.
