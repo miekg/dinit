@@ -58,7 +58,7 @@ And then call `docker run .... 80`
 
 ...
 
-## See also
+## See Also
 
 Dinit is partly inspired by
 [my_init](https://github.com/phusion/baseimage-docker/blob/master/image/bin/my_init).
