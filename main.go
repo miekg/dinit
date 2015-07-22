@@ -30,12 +30,13 @@ const testPid = 123
 func main() {
 	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
 	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROCS to runtime.NumCPU() * maxproc, when GOMAXPROCS already set use that")
+	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", "", "command to run during startup, non-zero exit status abort dinit")
 	flag.StringVar(&stop, "stop", "", "command to run during teardown")
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... CMD [CMD]...")
-		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment and reap any zombies.")
+		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment.")
 		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to CMDs.\n")
 		flag.PrintDefaults()
 	}
