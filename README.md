@@ -6,7 +6,7 @@
 
 ## Description
 
-Docker-init is a small init-like "daemon" (it is not a daemon) for use within
+Docker-init or dinit is a small init-like "daemon" (it is not a daemon) for use within
 Docker containers.
 
 Dinit will pass any environment variables through to the programs it is
@@ -16,8 +16,8 @@ children it is managing. It will *not* restart any of its children if they die.
 If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
 
-Docker-init has the concept of a *primary* process which is the *first* process
-listed. If that process dies Docker-init will kill the remaining processes and
+Dinit has the concept of a *primary* process which is the *first* process
+listed. If that process dies dinit will kill the remaining processes and
 exit. This allows for cleanups and container restarts.
 
 ### Why?
@@ -61,4 +61,4 @@ And then call `docker run .... 80`
 ## See Also
 
 Dinit is partly inspired by
-[my_init](https://github.com/phusion/baseimage-docker/blob/master/image/bin/my_init).
+[my_init](https://github.com/phusion/baseimage-docker/blob/master/image/bin/my_init). And init(8).
