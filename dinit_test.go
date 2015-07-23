@@ -7,18 +7,6 @@ import (
 	"time"
 )
 
-func TestIsEnv(t *testing.T) {
-	varname := "DINIT_BOOVAR"
-	if isEnv(varname) {
-		t.Fatalf("%s should not be a env. var", varname)
-	}
-	os.Setenv(varname, "blah")
-	if isEnv(varname) {
-		t.Fatalf("%s should be a env. var", varname)
-	}
-	t.Logf("var %s, value %s", varname, os.Getenv(varname))
-}
-
 func TestEnv(t *testing.T) {
 	varname := "DINIT_BOOVAR"
 	os.Setenv(varname, "")
@@ -29,6 +17,11 @@ func TestEnv(t *testing.T) {
 	os.Setenv(varname, "blah")
 	c = command("echo " + "$" + varname)
 	if c.Args[1] != "blah" {
+		t.Fatalf("%s should be a env. var", varname)
+	}
+	os.Setenv(varname, "blah")
+	c = command("echo " + "$" + varname+ ".morestuff")
+	if c.Args[1] != "blah.morestuff" {
 		t.Fatalf("%s should be a env. var", varname)
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -33,27 +32,4 @@ func envString(k, d string) string {
 		return x
 	}
 	return d
-}
-
-// isEnv will return true if s an environment variable, that is, it
-// starts with a '$' and exists in the environment.
-func isEnv(s string) bool {
-	if len(s) < 2 { // Need at least $<LETTER>
-		return false
-	}
-	if s[0] != '$' {
-		return false
-	}
-	varname := s[1:]
-	for _, env := range os.Environ() {
-		parts := strings.Split(env, "=")
-		if len(parts) < 2 {
-			continue
-		}
-		// Exists, but may be empty
-		if parts[0] == varname {
-			return true
-		}
-	}
-	return false
 }
