@@ -23,8 +23,8 @@ func TestEnv(t *testing.T) {
 	varname := "DINIT_BOOVAR"
 	os.Setenv(varname, "")
 	c := command("echo " + "$" + varname)
-	if c.Args[1] != "$"+varname {
-		t.Fatalf("%s should not be a env. var", varname)
+	if c.Args[1] != "" {
+		t.Fatalf("%s should be a env. var", varname)
 	}
 	os.Setenv(varname, "blah")
 	c = command("echo " + "$" + varname)
