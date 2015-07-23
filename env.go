@@ -50,8 +50,8 @@ func isEnv(s string) bool {
 		if len(parts) < 2 {
 			continue
 		}
-		// Exists and not empty
-		if parts[0] == varname && parts[1] != "" {
+		// Exists, but may be empty
+		if parts[0] == varname {
 			return true
 		}
 	}
