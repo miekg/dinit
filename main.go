@@ -37,7 +37,7 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... CMD [CMD]...")
 		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment.")
-		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to CMDs.\n")
+		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to the processes.\n")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
