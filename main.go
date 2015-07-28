@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime"
 	"strconv"
@@ -28,6 +29,45 @@ var (
 const testPid = 123
 
 func main() {
+	// -r CMD [OPTION...] is done first and we cleanup what we parse
+	var cmd *exec.Cmd = nil
+	cmds := []*exec.Cmd{}
+	minr := false
+
+	for i := 0; i < len(os.Args); i++ {
+		if os.Args[i] == "-r" {
+			println("new")
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+
+			minr = true
+
+			cmd = new(exec.Cmd)
+			cmd.Args = append(cmd.Args, os.Args[i+1])
+			cmd.Path = os.Args[i+1]
+			// TODO(miek): fix overflow here
+
+			os.Args[i] = ""
+			os.Args[i+1] = ""
+
+			i++
+			continue
+		}
+		if minr {
+			cmd.Args = append(cmd.Args, os.Args[i])
+			os.Args[i] = ""
+		}
+	}
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	fmt.Printf("%v\n", os.Args)
+	for _, c := range cmds {
+		fmt.Printf("%+v\n", c)
+	}
+
 	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
 	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROCS to runtime.NumCPU() * maxproc, when GOMAXPROCS already set use that")
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
@@ -35,12 +75,11 @@ func main() {
 	flag.StringVar(&stop, "stop", "", "command to run during teardown")
 
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... CMD [CMD]...")
+		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... CMD [CMD]...") // TODO(miek): fix
 		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment.")
 		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to the processes.\n")
 		flag.PrintDefaults()
 	}
-	flag.Parse()
 
 	if len(flag.Args()) == 0 {
 		logFatalf("need at least one command")
@@ -67,6 +106,7 @@ func main() {
 		defer stopcmd.Run()
 	}
 
+	// everyhing is
 	run(flag.Args())
 	wait()
 }

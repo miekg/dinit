@@ -2,7 +2,7 @@
 
 ## Synopsis
 
-    ./dinit [OPTIONS] CMD [CMD...]
+    ./dinit [OPTIONS] -r CMD [OPTIONS..] [-r CMD [OPTIONS...]...]
 
 ## Description
 
@@ -30,11 +30,11 @@ But a simpler solution. Get a standard container image and instead of:
 Do:
 
     ADD dinit dinit
-    ENTRYPOINT ["/dinit", "/bin/sleep 80"]
+    ENTRYPOINT ["/dinit", "-r", "/bin/sleep", 80"]
 
 or
 
-    ENTRYPOINT ["/dinit", "/bin/sleep $TIMEOUT"]
+    ENTRYPOINT ["/dinit", "-r", "/bin/sleep, "$TIMEOUT"]
 
 Where `$TIMEOUT` will be expanded by `dinit` itself.
 
