@@ -16,9 +16,9 @@ children it is managing. It will *not* restart any of its children if they die.
 If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
 
-Dinit has the concept of a *primary* process which is the *first* process
-listed. If that process dies dinit will kill the remaining processes and
-exits. This allows for cleanups and container restarts.
+Dinit has the concept of a *primary* process which is the *last* process listed.
+If that process dies dinit will kill the remaining processes and exits. This
+allows for cleanups and container restarts.
 
 ### Why?
 
@@ -36,12 +36,13 @@ or
 
     ENTRYPOINT ["/dinit", "-r", "/bin/sleep, "$TIMEOUT"]
 
-Where `$TIMEOUT` will be expanded by `dinit` itself.
+Where `$TIMEOUT` will be expanded by `dinit` itself. If you need `-r` as a flag
+to command just escape it with `\-r`, which will be removed by `dinit`.
 
 The last command in the list given to `dinit` will *also* get the arguments given
 to `docker run`, so the above sleep can be rewritten like:
 
-    ENTRYPOINT ["/dinit", "/bin/sleep"]
+    ENTRYPOINT ["/dinit", "-r", "/bin/sleep"]
 
 And then call `docker run .... 80`
 

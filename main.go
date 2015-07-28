@@ -120,6 +120,7 @@ func run(args []string) {
 			cmds.Cleanup(syscall.SIGINT)
 			return
 		}
+		// TODO(miek): primary is going to be last
 		if i == 0 {
 			prim.Set(cmd.Process.Pid)
 		}
