@@ -27,6 +27,15 @@ func TestEnv(t *testing.T) {
 	}
 }
 
+func TestStart(t *testing.T) {
+	cmd := "/bin/sleep 1"
+	os.Setenv("DINIT_START", cmd)
+	start := envString("$DINIT_START", "")
+	if start != cmd {
+		t.Fatalf("got %s, expected %s", cmd, start)
+	}
+}
+
 func ExampleRun() {
 	test = true
 
