@@ -22,50 +22,63 @@ var (
 
 	test bool // only used then testing
 
-	cmds = NewCommands()
+	cmds = NewCommands() // NewProcs
 	prim = NewPrimary()
 )
 
 const testPid = 123
 
 func main() {
-	// -r CMD [OPTION...] is done first and we cleanup what we parse
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION...] -r CMD [OPTION..] [-r CMD [OPTION...]]...")
+		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment.")
+		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to the processes.\n")
+		flag.PrintDefaults()
+	}
+
+	// -r CMD [OPTION...]
 	var cmd *exec.Cmd = nil
-	cmds := []*exec.Cmd{}
-	minr := false
+	commands := []*exec.Cmd{}
+	seen := false
 
 	for i := 0; i < len(os.Args); i++ {
-		if os.Args[i] == "-r" {
-			println("new")
+		switch os.Args[i] {
+		case "-r":
 			if cmd != nil {
-				cmds = append(cmds, cmd)
+				commands = append(commands, cmd)
 			}
 
-			minr = true
+			seen = true
 
 			cmd = new(exec.Cmd)
+			if i+1 == len(os.Args) {
+				logFatalf("need a command after -r")
+			}
 			cmd.Args = append(cmd.Args, os.Args[i+1])
 			cmd.Path = os.Args[i+1]
-			// TODO(miek): fix overflow here
 
+			// Clear the args to flag parsing keeps working.
 			os.Args[i] = ""
 			os.Args[i+1] = ""
 
 			i++
 			continue
+		case "\\-r":
+			os.Args[i] = "-r"
 		}
-		if minr {
+
+		if seen {
 			cmd.Args = append(cmd.Args, os.Args[i])
 			os.Args[i] = ""
 		}
 	}
 	if cmd != nil {
-		cmds = append(cmds, cmd)
+		commands = append(commands, cmd)
 	}
 
-	fmt.Printf("%v\n", os.Args)
-	for _, c := range cmds {
-		fmt.Printf("%+v\n", c)
+	if len(commands) == 0 {
+		flag.Usage()
+		return
 	}
 
 	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
@@ -73,17 +86,7 @@ func main() {
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", "", "command to run during startup, non-zero exit status abort dinit")
 	flag.StringVar(&stop, "stop", "", "command to run during teardown")
-
-	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION]... CMD [CMD]...") // TODO(miek): fix
-		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment.")
-		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to the processes.\n")
-		flag.PrintDefaults()
-	}
-
-	if len(flag.Args()) == 0 {
-		logFatalf("need at least one command")
-	}
+	flag.Parse()
 
 	if maxproc > 0.0 {
 		if v := os.Getenv("GOMAXPROCS"); v != "" {
@@ -106,42 +109,43 @@ func main() {
 		defer stopcmd.Run()
 	}
 
-	// everyhing is
-	run(flag.Args())
+	run(commands)
 	wait()
 }
 
 // run runs the commands as given on the command line.
-func run(args []string) {
-	for i, arg := range args {
-		cmd := command(arg)
-		if err := cmd.Start(); err != nil {
+func run(commands []*exec.Cmd) {
+	for i, _ := range commands {
+		// Need to copy here, because otherwise the closure below will access
+		// to wrong command, when we run in a loop.
+		c := commands[i]
+		if err := c.Start(); err != nil {
 			logPrintf("%s", err)
 			cmds.Cleanup(syscall.SIGINT)
 			return
 		}
 		// TODO(miek): primary is going to be last
-		if i == 0 {
-			prim.Set(cmd.Process.Pid)
+		if i == len(commands) - 1 {
+			prim.Set(c.Process.Pid)
 		}
 
-		pid := cmd.Process.Pid
+		pid := c.Process.Pid
 		if test {
 			pid = testPid
 		}
-		logPrintf("pid %d started: %v", pid, cmd.Args)
+		logPrintf("pid %d started: %v", pid, c.Args)
 
-		cmds.Insert(cmd)
+		cmds.Insert(c)
 
 		go func() {
-			err := cmd.Wait()
-			pid := cmd.Process.Pid
+			err := c.Wait()
+			pid := c.Process.Pid
 			if test {
 				pid = testPid
 			}
-			logPrintf("pid %d, finished: %v with error: %v", pid, cmd.Args, err)
-			cmds.Remove(cmd)
-			if prim.Primary(cmd.Process.Pid) && cmds.Len() > 0 {
+			logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
+			cmds.Remove(c)
+			if prim.Primary(c.Process.Pid) && cmds.Len() > 0 {
 				logPrintf("pid %d was primary, signalling other processes", pid)
 				cmds.Cleanup(syscall.SIGINT)
 			}
