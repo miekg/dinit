@@ -63,12 +63,26 @@ func ExampleFailToStart() {
 	// dinit: all processes exited, goodbye!
 }
 
+func ExampleTestAllPrimary() {
+	test = true
+	primary = true
+	run([]*exec.Cmd{command("sleep 2"), command("sleep 20")})
+	wait()
+	// Output: dinit: pid 123 started: [sleep 2]
+	// dinit: pid 123 started: [sleep 20]
+	// dinit: pid 123, finished: [sleep 2] with error: <nil>
+	// dinit: all processes considered primary, signalling other processes
+	// dinit: signal 2 sent to pid 123
+	// dinit: pid 123, finished: [sleep 20] with error: signal: interrupt
+	// dinit: all processes considered primary, signalling other processes
+	// dinit: all processes exited, goodbye!
+}
+
 // Test is flaky because of random output ordering.
 func exampleTestPrimary() {
 	test = true
 	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")})
 	wait()
-
 	// Output: dinit: pid 123 started: [less -]
 	// dinit: pid 123 started: [killall -SEGV cat]
 	// dinit: pid 123, finished: [less -] with error: <nil>

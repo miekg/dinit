@@ -55,9 +55,24 @@ whitespace and then executed.
   multiplied my `maxproc`, typical values are 0.5 or 1.0. When 0.0 `dinit` will
   not set GOMAXPROCS by itself. If GOMAXPROCS is *already* set in the environment
   this does nothing.
-* `start`: run a command when starting up. On any failure, `dinit` exits.
-* `stop`: run command on exit.
-* `timeout`: time in seconds before SIGKILL is send after the SIGTERM has been sent.
+* `start`: run a command when starting up. On any failure, `dinit` exits. The complete
+  command must be given as one string, enclosed with quotes.
+* `stop`: run command on exit. The complete command must be given as one string,
+  enclosed with quotes.
+* `timeout`: time in seconds before SIGKILL is send after the SIGTERM has been
+  sent.
+* `primary`: consider all commands primary; if one of them dies take down the
+  other processes.
+
+## Examples
+
+Start "sleep 2" with `dinit`, but before you do run `sleep 1`:
+
+    % ./dinit -start "/bin/sleep 1" -r "/bin/sleep" "2"
+    2015/07/29 21:49:04 dinit: pid 16759 started: [/bin/sleep 2]
+    2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
+    2015/07/29 21:49:06 dinit: all processes exited, goodbye!
+
 
 ## See Also
 

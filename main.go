@@ -86,7 +86,7 @@ func main() {
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", "", "command to run during startup, non-zero exit status aborts dinit")
 	flag.StringVar(&stop, "stop", "", "command to run during teardown")
-	flag.BoolVar(&primary, "primaey", false, "all processes are primary")
+	flag.BoolVar(&primary, "primary", false, "all processes are primary")
 
 	if len(commands) == 0 {
 		flag.Usage()
@@ -151,8 +151,12 @@ func run(commands []*exec.Cmd) {
 			}
 			logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
 			procs.Remove(c)
-			if prim.Primary(c.Process.Pid) && procs.Len() > 0 {
+			if primary || prim.Primary(c.Process.Pid) && procs.Len() > 0 {
+				if primary {
+				logPrintf("all processes considered primary, signalling other processes")
+				} else {
 				logPrintf("pid %d was primary, signalling other processes", pid)
+			}
 				procs.Cleanup(syscall.SIGINT)
 			}
 		}()
