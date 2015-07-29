@@ -1,7 +1,7 @@
 FROM alpine:3.1
+MAINTAINER Miek Gieben <miek@miek.nl> (@miekg)
 
-ENV HALLO MIEK
-
+ENV DINIT_TEST miek
 ADD dinit /dinit
 
-ENTRYPOINT [ "/dinit", "echo $HALLO" ]
+ENTRYPOINT [ "/dinit", "-r", "/bin/echo", "$DINIT_TEST" ]

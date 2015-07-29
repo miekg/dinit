@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"syscall"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ func TestEnv(t *testing.T) {
 		t.Fatalf("%s should be a env. var", varname)
 	}
 	os.Setenv(varname, "blah")
-	c = command("echo " + "$" + varname+ ".morestuff")
+	c = command("echo " + "$" + varname + ".morestuff")
 	if c.Args[1] != "blah.morestuff" {
 		t.Fatalf("%s should be a env. var", varname)
 	}
@@ -29,7 +30,7 @@ func TestEnv(t *testing.T) {
 func ExampleRun() {
 	test = true
 
-	run([]string{"cat /dev/null"})
+	run([]*exec.Cmd{command("cat /dev/null")})
 	wait()
 	// Output: dinit: pid 123 started: [cat /dev/null]
 	// dinit: pid 123, finished: [cat /dev/null] with error: <nil>
@@ -39,10 +40,10 @@ func ExampleRun() {
 func ExampleRunINT() {
 	test = true
 
-	run([]string{"sleep 10"})
+	run([]*exec.Cmd{command("sleep 10")})
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		cmds.Signal(syscall.SIGINT)
+		procs.Signal(syscall.SIGINT)
 	}()
 	wait()
 	// Output: dinit: pid 123 started: [sleep 10]
@@ -53,7 +54,7 @@ func ExampleRunINT() {
 
 func ExampleFailToStart() {
 	test = true
-	run([]string{"sleep 10", "verbose"})
+	run([]*exec.Cmd{command("sleep 10"), command("verbose")})
 	wait()
 	// Output: dinit: pid 123 started: [sleep 10]
 	// dinit: exec: "verbose": executable file not found in $PATH
@@ -62,18 +63,19 @@ func ExampleFailToStart() {
 	// dinit: all processes exited, goodbye!
 }
 
-// Test is flaky because the ordering of the output is not fixed.
-func examplePrimary() {
+// Test is flaky because of random output ordering.
+func exampleTestPrimary() {
 	test = true
-	run([]string{"cat /dev/zero", "less -f /dev/zero", "killall -SEGV cat"})
+	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")})
 	wait()
-	// Output: dinit: pid 123 started: [cat /dev/zero]
-	// dinit: pid 123 started: [less -f /dev/zero]
-	// dinit: pid 123, finished: [cat /dev/zero] with error: signal: segmentation fault
+
+	// Output: dinit: pid 123 started: [less -]
+	// dinit: pid 123 started: [killall -SEGV cat]
+	// dinit: pid 123, finished: [less -] with error: <nil>
+	// dinit: pid 123 started: [cat]
+	// dinit: pid 123, finished: [cat] with error: <nil>
 	// dinit: pid 123 was primary, signalling other processes
 	// dinit: signal 2 sent to pid 123
-	// dinit: pid 123 started: [killall -SEGV cat]
-	// dinit: pid 123, finished: [killall -SEGV cat] with error: <nil>
-	// dinit: pid 123, finished: [less -f /dev/zero] with error: signal: interrupt
+	// dinit: pid 123, finished: [killall -SEGV cat] with error: signal: interrupt
 	// dinit: all processes exited, goodbye!
 }

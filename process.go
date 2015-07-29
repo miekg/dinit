@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"os/exec"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -33,30 +32,30 @@ func (p *Primary) Primary(pid int) bool {
 	return ok
 }
 
-// Commands holds the processes that we run.
-type Commands struct {
+// Procs holds the processes that we run.
+type Procs struct {
 	sync.RWMutex
 	pids map[int]*exec.Cmd
 }
 
-func NewCommands() *Commands {
-	return &Commands{pids: make(map[int]*exec.Cmd)}
+func NewProcs() *Procs {
+	return &Procs{pids: make(map[int]*exec.Cmd)}
 }
 
-func (c *Commands) Insert(cmd *exec.Cmd) {
+func (c *Procs) Insert(cmd *exec.Cmd) {
 	c.Lock()
 	defer c.Unlock()
 	c.pids[cmd.Process.Pid] = cmd
 }
 
-func (c *Commands) Remove(cmd *exec.Cmd) {
+func (c *Procs) Remove(cmd *exec.Cmd) {
 	c.Lock()
 	defer c.Unlock()
 	delete(c.pids, cmd.Process.Pid)
 }
 
-// Signal sends sig to all processes in Commands.
-func (c *Commands) Signal(sig os.Signal) {
+// Signal sends sig to all processes in Procs.
+func (c *Procs) Signal(sig os.Signal) {
 	c.RLock()
 	defer c.RUnlock()
 	for pid, cmd := range c.pids {
@@ -69,37 +68,22 @@ func (c *Commands) Signal(sig os.Signal) {
 	}
 }
 
-// Cleanup will send signal sig to the commands and after a short time send
-// a SIGKKILL.
-func (c *Commands) Cleanup(sig os.Signal) {
-	cmds.Signal(sig)
+// Cleanup will send signal sig to the processes and after a short time send a SIGKKILL.
+func (c *Procs) Cleanup(sig os.Signal) {
+	procs.Signal(sig)
 
 	time.Sleep(2 * time.Second)
 
-	if cmds.Len() > 0 {
-		logPrintf("%d processes still alive after SIGINT/SIGTERM", cmds.Len())
+	if procs.Len() > 0 {
+		logPrintf("%d processes still alive after SIGINT/SIGTERM", procs.Len())
 		time.Sleep(timeout)
 	}
-	cmds.Signal(syscall.SIGKILL)
+	procs.Signal(syscall.SIGKILL)
 }
 
-// Len returns the number of processs in Commands.
-func (c *Commands) Len() int {
+// Len returns the number of processs in Procs.
+func (c *Procs) Len() int {
 	c.RLock()
 	defer c.RUnlock()
 	return len(c.pids)
-}
-
-// command parses arg and returns an *exec.Cmd that is ready to be run.
-func command(arg string) *exec.Cmd {
-	args := strings.Fields(arg) // Split on spaces and execute.
-	// Loop to check for env vars
-	for i, a := range args {
-		args[i] = os.ExpandEnv(a)
-	}
-
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd
 }

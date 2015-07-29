@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -22,8 +23,8 @@ var (
 
 	test bool // only used then testing
 
-	cmds = NewCommands() // NewProcs
-	prim = NewPrimary()
+	procs = NewProcs()
+	prim  = NewPrimary()
 )
 
 const testPid = 123
@@ -51,6 +52,9 @@ func main() {
 			seen = true
 
 			cmd = new(exec.Cmd)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
 			if i+1 == len(os.Args) {
 				logFatalf("need a command after -r")
 			}
@@ -68,7 +72,7 @@ func main() {
 		}
 
 		if seen {
-			cmd.Args = append(cmd.Args, os.Args[i])
+			cmd.Args = append(cmd.Args, os.ExpandEnv(os.Args[i]))
 			os.Args[i] = ""
 		}
 	}
@@ -76,16 +80,16 @@ func main() {
 		commands = append(commands, cmd)
 	}
 
+	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
+	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROCS to runtime.NumCPU() * maxproc, when GOMAXPROCS already set use that")
+	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
+	flag.StringVar(&start, "start", "", "command to run during startup, non-zero exit status aborts dinit")
+	flag.StringVar(&stop, "stop", "", "command to run during teardown")
+
 	if len(commands) == 0 {
 		flag.Usage()
 		return
 	}
-
-	flag.DurationVar(&timeout, "timeout", envDuration("DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
-	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROCS to runtime.NumCPU() * maxproc, when GOMAXPROCS already set use that")
-	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
-	flag.StringVar(&start, "start", "", "command to run during startup, non-zero exit status abort dinit")
-	flag.StringVar(&stop, "stop", "", "command to run during teardown")
 	flag.Parse()
 
 	if maxproc > 0.0 {
@@ -121,11 +125,11 @@ func run(commands []*exec.Cmd) {
 		c := commands[i]
 		if err := c.Start(); err != nil {
 			logPrintf("%s", err)
-			cmds.Cleanup(syscall.SIGINT)
+			procs.Cleanup(syscall.SIGINT)
 			return
 		}
-		// TODO(miek): primary is going to be last
-		if i == len(commands) - 1 {
+
+		if i == len(commands)-1 {
 			prim.Set(c.Process.Pid)
 		}
 
@@ -135,7 +139,7 @@ func run(commands []*exec.Cmd) {
 		}
 		logPrintf("pid %d started: %v", pid, c.Args)
 
-		cmds.Insert(c)
+		procs.Insert(c)
 
 		go func() {
 			err := c.Wait()
@@ -144,10 +148,10 @@ func run(commands []*exec.Cmd) {
 				pid = testPid
 			}
 			logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
-			cmds.Remove(c)
-			if prim.Primary(c.Process.Pid) && cmds.Len() > 0 {
+			procs.Remove(c)
+			if prim.Primary(c.Process.Pid) && procs.Len() > 0 {
 				logPrintf("pid %d was primary, signalling other processes", pid)
-				cmds.Cleanup(syscall.SIGINT)
+				procs.Cleanup(syscall.SIGINT)
 			}
 		}()
 	}
@@ -169,15 +173,29 @@ func wait() {
 	for {
 		select {
 		case <-tick:
-			if cmds.Len() == 0 {
+			if procs.Len() == 0 {
 				return
 			}
 		case sig := <-other:
-			cmds.Signal(sig)
+			procs.Signal(sig)
 		case sig := <-ints:
-			cmds.Cleanup(sig)
+			procs.Cleanup(sig)
 		}
 	}
+}
+
+// command parses arg and returns an *exec.Cmd that is ready to be run.
+// This is currently only used for the start and stop commands.
+func command(arg string) *exec.Cmd {
+	args := strings.Fields(arg) // Split on spaces and execute.
+	for i, a := range args {
+		args[i] = os.ExpandEnv(a)
+	}
+
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd
 }
 
 func logPrintf(format string, v ...interface{}) {

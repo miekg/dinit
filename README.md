@@ -46,6 +46,9 @@ to `docker run`, so the above sleep can be rewritten like:
 
 And then call `docker run .... 80`
 
+Note that the `-start` and `-stop` still take one argument which is split on
+whitespace and then executed.
+
 ## Options
 
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
