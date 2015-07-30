@@ -73,6 +73,15 @@ Start "sleep 2" with `dinit`, but before you do run `sleep 1`:
     2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
+## Environment
+
+The following environment variables are used by dinit:
+
+* DINIT_TIMEOUT: default value use for `-timeout`.
+* DINIT_START: command to run during startup.
+* DINIT_STOP: command to run during teardown.
+* GOMAXPROCS: the GOMAXPROCS for Go programs.
+
 
 ## See Also
 
