@@ -1,8 +1,10 @@
 # Dinit
 
+
 ## Synopsis
 
     ./dinit [OPTIONS] -r CMD [OPTIONS..] [-r CMD [OPTIONS...]...]
+
 
 ## Description
 
@@ -19,6 +21,7 @@ daemonize dinit will lose track of them.
 Dinit has the concept of a *primary* process which is the *last* process listed.
 If that process dies dinit will kill the remaining processes and exits. This
 allows for cleanups and container restarts.
+
 
 ### Why?
 
@@ -49,6 +52,7 @@ And then call `docker run .... 80`
 Note that the `-start` and `-stop` still take one argument which is split on
 whitespace and then executed.
 
+
 ## Options
 
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
@@ -64,14 +68,16 @@ whitespace and then executed.
 * `primary`: consider all commands primary; if one of them dies take down the
   other processes.
 
+
 ## Examples
 
 Start "sleep 2" with `dinit`, but before you do run `sleep 1`:
 
-    % ./dinit -start "/bin/sleep 1" -r "/bin/sleep" "2"
+    % ./dinit -start "/bin/sleep 1" -r /bin/sleep 2
     2015/07/29 21:49:04 dinit: pid 16759 started: [/bin/sleep 2]
     2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
+
 
 ## Environment
 
