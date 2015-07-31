@@ -30,7 +30,7 @@ But a simpler solution. Get a standard container image and instead of:
 Do:
 
     ADD dinit dinit
-    ENTRYPOINT ["/dinit", "-r", "/bin/sleep", 80"]
+    ENTRYPOINT ["/dinit", "-r", "/bin/sleep", "80"]
 
 or
 
