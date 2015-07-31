@@ -49,6 +49,18 @@ And then call `docker run .... 80`
 Note that the `-start` and `-stop` still take one argument which is split on
 whitespace and then executed.
 
+## Socket Interface
+
+When running `dinit` it opens an Unix socket named `/tmp/dinit.sock`. This
+enables a text interface that allows for starting extra process as childeren of
+dinit. The interface is extremely simple: you send a string terminated with
+a newline.
+
+The string being send is the command and its arguments: `CMD ARG1 ARG2 ... \n`.
+
+The maximum length of the command line that can be send is 512 character
+including the newline.
+
 ## Options
 
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
@@ -66,21 +78,27 @@ whitespace and then executed.
 
 ## Examples
 
-Start "sleep 2" with `dinit`, but before you do run `sleep 1`:
+Start "sleep 2" with dinit, but before you do run `sleep 1`:
 
     % ./dinit -start "/bin/sleep 1" -r "/bin/sleep" "2"
     2015/07/29 21:49:04 dinit: pid 16759 started: [/bin/sleep 2]
     2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
+When dinit's socket is enabled you can use netcat so send command to dinit:
+
+    % echo '/bin/echo $EDITOR' | nc -U /tmp/dinit.sock
+
 ## Environment
 
 The following environment variables are used by dinit:
 
-* DINIT_TIMEOUT: default value use for `-timeout`.
+* DINIT_TIMEOUT: default value use for timeout.
 * DINIT_START: command to run during startup.
 * DINIT_STOP: command to run during teardown.
 * GOMAXPROCS: the GOMAXPROCS for Go programs.
+
+Dinit opens an Unix socket named `/tmp/dinit.sock`.
 
 
 ## See Also
