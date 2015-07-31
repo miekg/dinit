@@ -59,8 +59,8 @@ func main() {
 			if i+1 == len(os.Args) {
 				logFatalf("need a command after -r")
 			}
-			cmd.Args = append(cmd.Args, os.Args[i+1])
-			cmd.Path = os.Args[i+1]
+			cmd.Path = os.ExpandEnv(os.Args[i+1])
+			cmd.Args = append(cmd.Args, cmd.Path)
 
 			// Clear the args to flag parsing keeps working.
 			os.Args[i] = ""
