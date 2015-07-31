@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	timeout     time.Duration
-	maxproc     float64
-	start, stop string
-	primary     bool
+	timeout       time.Duration
+	maxproc       float64
+	start, stop   string
+	primary, sock bool
 
 	test bool // only used then testing
 
@@ -52,9 +52,7 @@ func main() {
 
 			seen = true
 
-			cmd = new(exec.Cmd)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
+			cmd = &exec.Cmd{Stdout: os.Stdout, Stderr: os.Stderr}
 
 			if i+1 == len(os.Args) {
 				logFatalf("need a command after -r")
@@ -62,7 +60,7 @@ func main() {
 			cmd.Path = os.ExpandEnv(os.Args[i+1])
 			cmd.Args = append(cmd.Args, cmd.Path)
 
-			// Clear the args to flag parsing keeps working.
+			// Clear the args so flag parsing keeps working.
 			os.Args[i] = ""
 			os.Args[i+1] = ""
 
@@ -86,6 +84,7 @@ func main() {
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", envString("$DINIT_START", ""), "command to run during startup, non-zero exit status aborts dinit")
 	flag.StringVar(&stop, "stop", envString("$DINIT_STOP", ""), "command to run during teardown")
+	flag.BoolVar(&sock, "socket", false, "open unix socket as /tmp/dinit.sock")
 	flag.BoolVar(&primary, "primary", false, "all processes are primary")
 
 	if len(commands) == 0 {
@@ -93,6 +92,11 @@ func main() {
 		return
 	}
 	flag.Parse()
+
+	if sock {
+		go socket()
+		defer os.Remove(socketName)
+	}
 
 	if maxproc > 0.0 {
 		if v := os.Getenv("GOMAXPROCS"); v != "" {
@@ -115,12 +119,13 @@ func main() {
 		defer stopcmd.Run()
 	}
 
-	run(commands)
+	run(commands, false)
 	wait()
 }
 
-// run runs the commands as given on the command line.
-func run(commands []*exec.Cmd) {
+// run runs the commands as given on the command line. If noprimary is
+// true none of the processes will be considered primary.
+func run(commands []*exec.Cmd, noprimary bool) {
 	for i, _ := range commands {
 		// Need to copy here, because otherwise the closure below will access
 		// to wrong command, when we run in a loop.
@@ -131,7 +136,7 @@ func run(commands []*exec.Cmd) {
 			return
 		}
 
-		if i == len(commands)-1 {
+		if i == len(commands)-1 && !noprimary {
 			prim.Set(c.Process.Pid)
 		}
 
@@ -153,10 +158,10 @@ func run(commands []*exec.Cmd) {
 			procs.Remove(c)
 			if primary || prim.Primary(c.Process.Pid) && procs.Len() > 0 {
 				if primary {
-				logPrintf("all processes considered primary, signalling other processes")
+					logPrintf("all processes considered primary, signalling other processes")
 				} else {
-				logPrintf("pid %d was primary, signalling other processes", pid)
-			}
+					logPrintf("pid %d was primary, signalling other processes", pid)
+				}
 				procs.Cleanup(syscall.SIGINT)
 			}
 		}()
