@@ -52,7 +52,7 @@ func Args(args []string) []*exec.Cmd {
 // String is the opposite of Args and returns the full command line
 // string as first seen.
 func String(cmds []*exec.Cmd) string {
-	// Bit lame that we encode and decode twice when wrting to the socket...
+	// Bit lame that we encode and decode twice when writing to the socket...
 	s := ""
 	for i, c := range cmds {
 		s += "-r "
