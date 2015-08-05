@@ -89,6 +89,9 @@ When dinit's socket is enabled you can use netcat so send command to dinit:
 
     % echo '/bin/echo $EDITOR' | nc -U /tmp/dinit.sock
 
+Of course when running inside a docker container, netcat with the -U option
+must be available and you need to `docker exec` the command.
+
 ## Environment
 
 The following environment variables are used by dinit:
