@@ -56,7 +56,7 @@ func main() {
 	flag.Parse()
 
 	if !sock {
-		// If not sending something over the socket, don't open it.
+		// If sending something over the socket, don't open it.
 		go socket()
 		defer os.Remove(socketName)
 	}

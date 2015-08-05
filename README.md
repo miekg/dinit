@@ -66,6 +66,8 @@ including the newline.
 
 With `dinit -submit` you can easily access this functionality:
 
+    % dinit -submit -r sleep 20
+
 ## Options
 
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
@@ -98,7 +100,7 @@ process.
 
 Or when dinit is running in a docker container:
 
-    % docker exec a7a55cd8fcf3 /dinit -s -r /bin/sleep 10
+    % docker exec a7a55cd8fcf3 /dinit -submit -r /bin/sleep 10
 
 ## Environment
 
