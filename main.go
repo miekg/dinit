@@ -46,7 +46,7 @@ func main() {
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", envString("$DINIT_START", ""), "command to run during startup, non-zero exit status aborts dinit")
 	flag.StringVar(&stop, "stop", envString("$DINIT_STOP", ""), "command to run during teardown")
-	flag.BoolVar(&sock, "s", false, "write to command to the unix socket /tmp/dinit.sock")
+	flag.BoolVar(&sock, "submit", false, "write -r CMD... to the unix socket /tmp/dinit.sock")
 	flag.BoolVar(&primary, "primary", false, "all processes are primary")
 
 	if len(commands) == 0 {

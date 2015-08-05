@@ -61,7 +61,7 @@ The string being send is the command and its arguments: `-r CMD ARG1 ARG2 ... \n
 The maximum length of the command line that can be send is 512 character
 including the newline.
 
-With `dinit -s` you can easily access this functionality:
+With `dinit -submit` you can easily access this functionality:
 
 ## Options
 
@@ -87,10 +87,10 @@ Start "sleep 2" with dinit, but before you do run `sleep 1`:
     2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
-With `-s` you can start extra processes that will be children of the original dinit
+With `-submit` you can start extra processes that will be children of the original dinit
 process.
 
-    % dinit -s -r /bin/sleep 2
+    % dinit -submit -r /bin/sleep 2
 
 Or when dinit is running in a docker container:
 
