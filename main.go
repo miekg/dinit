@@ -39,52 +39,14 @@ func main() {
 	}
 
 	// -r CMD [OPTION...]
-	var cmd *exec.Cmd = nil
-	commands := []*exec.Cmd{}
-	seen := false
-
-	for i := 0; i < len(os.Args); i++ {
-		switch os.Args[i] {
-		case "-r":
-			if cmd != nil {
-				commands = append(commands, cmd)
-			}
-
-			seen = true
-
-			cmd = &exec.Cmd{Stdout: os.Stdout, Stderr: os.Stderr}
-
-			if i+1 == len(os.Args) {
-				logFatalf("need a command after -r")
-			}
-			cmd.Args = append(cmd.Args, os.Args[i+1])
-			cmd.Path = os.Args[i+1]
-
-			// Clear the args so flag parsing keeps working.
-			os.Args[i] = ""
-			os.Args[i+1] = ""
-
-			i++
-			continue
-		case "\\-r":
-			os.Args[i] = "-r"
-		}
-
-		if seen {
-			cmd.Args = append(cmd.Args, os.ExpandEnv(os.Args[i]))
-			os.Args[i] = ""
-		}
-	}
-	if cmd != nil {
-		commands = append(commands, cmd)
-	}
+	commands := Args(os.Args)
 
 	flag.DurationVar(&timeout, "timeout", envDuration("$DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
 	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROCS to runtime.NumCPU() * maxproc, when GOMAXPROCS already set use that")
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", envString("$DINIT_START", ""), "command to run during startup, non-zero exit status aborts dinit")
 	flag.StringVar(&stop, "stop", envString("$DINIT_STOP", ""), "command to run during teardown")
-	flag.BoolVar(&sock, "socket", false, "open unix socket as /tmp/dinit.sock")
+	flag.BoolVar(&sock, "s", false, "write to command to the unix socket /tmp/dinit.sock")
 	flag.BoolVar(&primary, "primary", false, "all processes are primary")
 
 	if len(commands) == 0 {
@@ -93,7 +55,8 @@ func main() {
 	}
 	flag.Parse()
 
-	if sock {
+	if !sock {
+		// If not sending something over the socket, don't open it.
 		go socket()
 		defer os.Remove(socketName)
 	}
@@ -118,6 +81,13 @@ func main() {
 		stopcmd := command(stop)
 		defer stopcmd.Run()
 	}
+	if sock {
+		err := write(commands)
+		if err != nil {
+			logFatalf("failed to write to unix socket: %s", err)
+		}
+		return
+	}
 
 	run(commands, false)
 	wait()
@@ -125,18 +95,21 @@ func main() {
 
 // run runs the commands as given on the command line. If noprimary is
 // true none of the processes will be considered primary.
-func run(commands []*exec.Cmd, noprimary bool) {
+func run(commands []*exec.Cmd, fromsocket bool) {
 	for i, _ := range commands {
 		// Need to copy here, because otherwise the closure below will access
 		// to wrong command, when we run in a loop.
 		c := commands[i]
 		if err := c.Start(); err != nil {
 			logPrintf("%s", err)
-			procs.Cleanup(syscall.SIGINT)
-			return
+			if !fromsocket {
+				procs.Cleanup(syscall.SIGINT)
+				return
+			}
+			continue
 		}
 
-		if i == len(commands)-1 && !noprimary {
+		if i == len(commands)-1 && !fromsocket {
 			prim.Set(c.Process.Pid)
 		}
 
@@ -172,6 +145,9 @@ func run(commands []*exec.Cmd, noprimary bool) {
 // wait waits for commands to finish.
 func wait() {
 	defer func() { logPrintf("all processes exited, goodbye!") }()
+	if !sock {
+		defer os.Remove(socketName)
+	}
 
 	ints := make(chan os.Signal)
 	signal.Notify(ints, syscall.SIGINT, syscall.SIGTERM)

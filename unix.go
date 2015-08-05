@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -20,8 +21,9 @@ func startCommand(c net.Conn) {
 		return
 	}
 
-	data := string(buf[0:n])
-	run([]*exec.Cmd{command(data)}, true)
+	cmdargs := strings.Fields(string(buf[0:n]))
+	commands := Args(cmdargs)
+	run(commands, true)
 }
 
 func socket() {
@@ -39,4 +41,17 @@ func socket() {
 
 		go startCommand(fd)
 	}
+}
+
+func write(cmds []*exec.Cmd) error {
+	c, err := net.Dial("unix", socketName)
+	if err != nil {
+		return err
+	}
+	str := String(cmds)
+	_, err = c.Write([]byte(str))
+	if err != nil {
+		return err
+	}
+	return nil
 }
