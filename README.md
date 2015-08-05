@@ -90,6 +90,9 @@ Start "sleep 2" with dinit, but before you do run `sleep 1`:
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
 
+Of course when running inside a docker container, netcat with the -U option
+must be available and you need to `docker exec` the command.
+
 ## Environment
 
 The following environment variables are used by dinit:
