@@ -52,6 +52,7 @@ And then call `docker run .... 80`
 Note that the `-start` and `-stop` still take one argument which is split on
 whitespace and then executed.
 
+
 ## Socket Interface
 
 When running `dinit` it opens an Unix socket named `/tmp/dinit.sock`. This
@@ -68,6 +69,7 @@ With `dinit -submit` you can easily access this functionality:
 
     % dinit -submit -r sleep 20
 
+
 ## Options
 
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
@@ -82,6 +84,7 @@ With `dinit -submit` you can easily access this functionality:
   sent.
 * `primary`: consider all commands primary; if one of them dies take down the
   other processes.
+* `submit`: submit a command line to dinit's socket interface.
 
 
 ## Examples
@@ -101,6 +104,7 @@ process.
 Or when dinit is running in a docker container:
 
     % docker exec a7a55cd8fcf3 /dinit -submit -r /bin/sleep 10
+
 
 ## Environment
 
