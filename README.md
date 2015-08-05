@@ -53,6 +53,23 @@ Note that the `-start` and `-stop` still take one argument which is split on
 whitespace and then executed.
 
 
+## Socket Interface
+
+When running `dinit` it opens an Unix socket named `/tmp/dinit.sock`. This
+enables a text interface that allows for starting extra process as childeren of
+dinit. The interface is extremely simple: you give it a commandline as you would
+normally give to dinit, terminated with a newline.
+
+The string being send is the command and its arguments: `-r CMD ARG1 ARG2 ... \n`.
+
+The maximum length of the command line that can be send is 512 character
+including the newline.
+
+With `dinit -submit` you can easily access this functionality:
+
+    % dinit -submit -r sleep 20
+
+
 ## Options
 
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
@@ -67,26 +84,38 @@ whitespace and then executed.
   sent.
 * `primary`: consider all commands primary; if one of them dies take down the
   other processes.
+* `submit`: submit a command line to dinit's socket interface.
 
 
 ## Examples
 
-Start "sleep 2" with `dinit`, but before you do run `sleep 1`:
+Start "sleep 2" with dinit, but before you do run `sleep 1`:
 
     % ./dinit -start "/bin/sleep 1" -r /bin/sleep 2
     2015/07/29 21:49:04 dinit: pid 16759 started: [/bin/sleep 2]
     2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
+With `-submit` you can start extra processes that will be children of the original dinit
+process.
+
+    % dinit -submit -r /bin/sleep 2
+
+Or when dinit is running in a docker container:
+
+    % docker exec a7a55cd8fcf3 /dinit -submit -r /bin/sleep 10
+
 
 ## Environment
 
 The following environment variables are used by dinit:
 
-* DINIT_TIMEOUT: default value use for `-timeout`.
+* DINIT_TIMEOUT: default value use for timeout.
 * DINIT_START: command to run during startup.
 * DINIT_STOP: command to run during teardown.
 * GOMAXPROCS: the GOMAXPROCS for Go programs.
+
+Dinit opens an Unix socket named `/tmp/dinit.sock`.
 
 
 ## See Also

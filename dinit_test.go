@@ -39,7 +39,7 @@ func TestStart(t *testing.T) {
 func ExampleRun() {
 	test = true
 
-	run([]*exec.Cmd{command("cat /dev/null")})
+	run([]*exec.Cmd{command("cat /dev/null")}, false)
 	wait()
 	// Output: dinit: pid 123 started: [cat /dev/null]
 	// dinit: pid 123, finished: [cat /dev/null] with error: <nil>
@@ -49,7 +49,7 @@ func ExampleRun() {
 func ExampleRunINT() {
 	test = true
 
-	run([]*exec.Cmd{command("sleep 10")})
+	run([]*exec.Cmd{command("sleep 10")}, false)
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		procs.Signal(syscall.SIGINT)
@@ -63,7 +63,7 @@ func ExampleRunINT() {
 
 func ExampleFailToStart() {
 	test = true
-	run([]*exec.Cmd{command("sleep 10"), command("verbose")})
+	run([]*exec.Cmd{command("sleep 10"), command("verbose")}, false)
 	wait()
 	// Output: dinit: pid 123 started: [sleep 10]
 	// dinit: exec: "verbose": executable file not found in $PATH
@@ -75,7 +75,7 @@ func ExampleFailToStart() {
 func ExampleTestAllPrimary() {
 	test = true
 	primary = true
-	run([]*exec.Cmd{command("sleep 2"), command("sleep 20")})
+	run([]*exec.Cmd{command("sleep 2"), command("sleep 20")}, false)
 	wait()
 	// Output: dinit: pid 123 started: [sleep 2]
 	// dinit: pid 123 started: [sleep 20]
@@ -88,9 +88,32 @@ func ExampleTestAllPrimary() {
 }
 
 // Test is flaky because of random output ordering.
+func ExampleTestSubmit() {
+	test = true
+	socketName = "dinit.sock"
+	go socket()
+	time.Sleep(1 * time.Second)
+
+	run([]*exec.Cmd{command("sleep 3")}, false)
+	write([]*exec.Cmd{command("/bin/sleep 4")})
+
+	time.Sleep(1 * time.Second)
+
+	procs.Signal(syscall.SIGINT)
+	wait()
+	// Output: dinit: pid 123 started: [sleep 3]
+	// dinit: pid 123 started: [/bin/sleep 4]
+	// dinit: signal 2 sent to pid 123
+	// dinit: signal 2 sent to pid 123
+	// dinit: pid 123, finished: [/bin/sleep 4] with error: signal: interrupt
+	// dinit: pid 123, finished: [sleep 3] with error: signal: interrupt
+	// dinit: all processes exited, goodbye!
+}
+
+// Test is flaky because of random output ordering.
 func exampleTestPrimary() {
 	test = true
-	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")})
+	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")}, false)
 	wait()
 	// Output: dinit: pid 123 started: [less -]
 	// dinit: pid 123 started: [killall -SEGV cat]
