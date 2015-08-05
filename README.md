@@ -56,13 +56,15 @@ whitespace and then executed.
 
 When running `dinit` it opens an Unix socket named `/tmp/dinit.sock`. This
 enables a text interface that allows for starting extra process as childeren of
-dinit. The interface is extremely simple: you send a string terminated with
-a newline.
+dinit. The interface is extremely simple: you give it a commandline as you would
+normally give to dinit, terminated with a newline.
 
-The string being send is the command and its arguments: `CMD ARG1 ARG2 ... \n`.
+The string being send is the command and its arguments: `-r CMD ARG1 ARG2 ... \n`.
 
 The maximum length of the command line that can be send is 512 character
 including the newline.
+
+With `dinit -s` you can easily access this functionality:
 
 ## Options
 
@@ -89,9 +91,14 @@ Start "sleep 2" with dinit, but before you do run `sleep 1`:
     2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
+With `-s` you can start extra processes that will be children of the original dinit
+process.
 
-Of course when running inside a docker container, netcat with the -U option
-must be available and you need to `docker exec` the command.
+    % dinit -s -r /bin/sleep 2
+
+Or when dinit is running in a docker container:
+
+    % docker exec a7a55cd8fcf3 /dinit -s -r /bin/sleep 10
 
 ## Environment
 
