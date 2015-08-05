@@ -88,6 +88,29 @@ func ExampleTestAllPrimary() {
 }
 
 // Test is flaky because of random output ordering.
+func ExampleTestSubmit() {
+	test = true
+	socketName = "dinit.sock"
+	go socket()
+	time.Sleep(1 * time.Second)
+
+	run([]*exec.Cmd{command("sleep 3")}, false)
+	write([]*exec.Cmd{command("/bin/sleep 4")})
+
+	time.Sleep(1 * time.Second)
+
+	procs.Signal(syscall.SIGINT)
+	wait()
+	// Output: dinit: pid 123 started: [sleep 3]
+	// dinit: pid 123 started: [/bin/sleep 4]
+	// dinit: signal 2 sent to pid 123
+	// dinit: signal 2 sent to pid 123
+	// dinit: pid 123, finished: [/bin/sleep 4] with error: signal: interrupt
+	// dinit: pid 123, finished: [sleep 3] with error: signal: interrupt
+	// dinit: all processes exited, goodbye!
+}
+
+// Test is flaky because of random output ordering.
 func exampleTestPrimary() {
 	test = true
 	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")}, false)

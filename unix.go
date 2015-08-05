@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const (
+var (
 	socketName   = "/tmp/dinit.sock"
 	socketMaxLen = 512
 )
