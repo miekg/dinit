@@ -127,7 +127,13 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 			if test {
 				pid = testPid
 			}
-			logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
+
+			if err != nil {
+				logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
+			} else {
+				logPrintf("pid %d, finished: %v", pid, c.Args)
+			}
+
 			procs.Remove(c)
 			if primary || prim.Primary(c.Process.Pid) && procs.Len() > 0 {
 				if primary {

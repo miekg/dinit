@@ -42,7 +42,7 @@ func ExampleRun() {
 	run([]*exec.Cmd{command("cat /dev/null")}, false)
 	wait()
 	// Output: dinit: pid 123 started: [cat /dev/null]
-	// dinit: pid 123, finished: [cat /dev/null] with error: <nil>
+	// dinit: pid 123, finished: [cat /dev/null]
 	// dinit: all processes exited, goodbye!
 }
 
@@ -79,7 +79,7 @@ func ExampleTestAllPrimary() {
 	wait()
 	// Output: dinit: pid 123 started: [sleep 2]
 	// dinit: pid 123 started: [sleep 20]
-	// dinit: pid 123, finished: [sleep 2] with error: <nil>
+	// dinit: pid 123, finished: [sleep 2]
 	// dinit: all processes considered primary, signalling other processes
 	// dinit: signal 2 sent to pid 123
 	// dinit: pid 123, finished: [sleep 20] with error: signal: interrupt
@@ -117,9 +117,9 @@ func exampleTestPrimary() {
 	wait()
 	// Output: dinit: pid 123 started: [less -]
 	// dinit: pid 123 started: [killall -SEGV cat]
-	// dinit: pid 123, finished: [less -] with error: <nil>
+	// dinit: pid 123, finished: [less -]
 	// dinit: pid 123 started: [cat]
-	// dinit: pid 123, finished: [cat] with error: <nil>
+	// dinit: pid 123, finished: [cat]
 	// dinit: pid 123 was primary, signalling other processes
 	// dinit: signal 2 sent to pid 123
 	// dinit: pid 123, finished: [killall -SEGV cat] with error: signal: interrupt
