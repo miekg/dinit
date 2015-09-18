@@ -93,7 +93,7 @@ Start "sleep 2" with dinit, but before you do run `sleep 1`:
 
     % ./dinit -start "/bin/sleep 1" -r /bin/sleep 2
     2015/07/29 21:49:04 dinit: pid 16759 started: [/bin/sleep 2]
-    2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2] with error: <nil>
+    2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2]
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
 With `-submit` you can start extra processes that will be children of the original dinit
