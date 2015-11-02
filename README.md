@@ -19,7 +19,7 @@ If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
 
 Dinit has the concept of a *primary* process which is the *last* process listed.
-If that process dies dinit will kill the remaining processes and exits. This
+If that process dies dinit will kill the remaining processes and exit. This
 allows for cleanups and container restarts.
 
 
@@ -40,7 +40,7 @@ or
     ENTRYPOINT ["/dinit", "-r", "/bin/sleep, "$TIMEOUT"]
 
 Where `$TIMEOUT` will be expanded by `dinit` itself. If you need `-r` as a flag
-to command just escape it with `\-r`, which will be removed by `dinit`.
+to a command just escape it with `\-r`, which will be removed by `dinit`.
 
 The last command in the list given to `dinit` will *also* get the arguments given
 to `docker run`, so the above sleep can be rewritten like:
@@ -55,14 +55,14 @@ whitespace and then executed.
 
 ## Socket Interface
 
-When running `dinit` it opens an Unix socket named `/tmp/dinit.sock`. This
-enables a text interface that allows for starting extra process as childeren of
+When running `dinit` it opens a Unix socket named `/tmp/dinit.sock`. This
+enables a text interface that allows for starting extra processes as children of
 dinit. The interface is extremely simple: you give it a commandline as you would
 normally give to dinit, terminated with a newline.
 
-The string being send is the command and its arguments: `-r CMD ARG1 ARG2 ... \n`.
+The string being sent is the command and its arguments: `-r CMD ARG1 ARG2 ... \n`.
 
-The maximum length of the command line that can be send is 512 character
+The maximum length of the command line that can be sent is 512 characters
 including the newline.
 
 With `dinit -submit` you can easily access this functionality:
@@ -80,9 +80,9 @@ With `dinit -submit` you can easily access this functionality:
   command must be given as one string, enclosed with quotes.
 * `stop`: run command on exit. The complete command must be given as one string,
   enclosed with quotes.
-* `timeout`: time in seconds before SIGKILL is send after the SIGTERM has been
+* `timeout`: time in seconds before SIGKILL is sent after the SIGTERM has been
   sent.
-* `primary`: consider all commands primary; if one of them dies take down the
+* `primary`: consider all commands primary; if one of them dies then take down the
   other processes.
 * `submit`: submit a command line to dinit's socket interface.
 
@@ -110,12 +110,12 @@ Or when dinit is running in a docker container:
 
 The following environment variables are used by dinit:
 
-* DINIT_TIMEOUT: default value use for timeout.
+* DINIT_TIMEOUT: default value to use for timeout.
 * DINIT_START: command to run during startup.
 * DINIT_STOP: command to run during teardown.
 * GOMAXPROCS: the GOMAXPROCS for Go programs.
 
-Dinit opens an Unix socket named `/tmp/dinit.sock`.
+Dinit opens a Unix socket named `/tmp/dinit.sock`.
 
 
 ## See Also
