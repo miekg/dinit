@@ -43,6 +43,7 @@ func ExampleRun() {
 	wait()
 	// Output: dinit: pid 123 started: [cat /dev/null]
 	// dinit: pid 123, finished: [cat /dev/null]
+	// dinit: pid 123 was primary, signalling other processes
 	// dinit: all processes exited, goodbye!
 }
 
@@ -58,6 +59,7 @@ func ExampleRunINT() {
 	// Output: dinit: pid 123 started: [sleep 10]
 	// dinit: signal 2 sent to pid 123
 	// dinit: pid 123, finished: [sleep 10] with error: signal: interrupt
+	// dinit: pid 123 was primary, signalling other processes
 	// dinit: all processes exited, goodbye!
 }
 
@@ -66,7 +68,7 @@ func ExampleFailToStart() {
 	run([]*exec.Cmd{command("sleep 10"), command("verbose")}, false)
 	wait()
 	// Output: dinit: pid 123 started: [sleep 10]
-	// dinit: exec: "verbose": executable file not found in $PATH
+	// dinit: process failed to start: exec: "verbose": executable file not found in $PATH
 	// dinit: signal 2 sent to pid 123
 	// dinit: pid 123, finished: [sleep 10] with error: signal: interrupt
 	// dinit: all processes exited, goodbye!
@@ -101,12 +103,18 @@ func ExampleTestSubmit() {
 
 	procs.Signal(syscall.SIGINT)
 	wait()
-	// Output: dinit: pid 123 started: [sleep 3]
+	// dinit: pid 123 started: [sleep 3]
 	// dinit: pid 123 started: [/bin/sleep 4]
+	// dinit: 2 processes still alive after SIGINT/SIGTERM
+	// dinit: signal 9 sent to pid 123
+	// dinit: signal 9 sent to pid 123
+	// dinit: pid 123, finished: [/bin/sleep 4] with error: signal: killed
+	// dinit: pid 123, finished: [sleep 3] with error: signal: killed
+	// dinit: all processes considered primary, signalling other processes
+	// dinit: 1 processes still alive after SIGINT/SIGTERM
+	// dinit: signal 9 sent to pid 123
 	// dinit: signal 2 sent to pid 123
-	// dinit: signal 2 sent to pid 123
-	// dinit: pid 123, finished: [/bin/sleep 4] with error: signal: interrupt
-	// dinit: pid 123, finished: [sleep 3] with error: signal: interrupt
+	// dinit: all processes considered primary, signalling other processes
 	// dinit: all processes exited, goodbye!
 }
 

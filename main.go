@@ -101,7 +101,7 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 		// to wrong command, when we run in a loop.
 		c := commands[i]
 		if err := c.Start(); err != nil {
-			logPrintf("%s", err)
+			logPrintf("process failed to start: %v", err)
 			if !fromsocket {
 				procs.Cleanup(syscall.SIGINT)
 				return
@@ -135,7 +135,7 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 			}
 
 			procs.Remove(c)
-			if primary || prim.Primary(c.Process.Pid) && procs.Len() > 0 {
+			if primary || prim.Primary(c.Process.Pid) {
 				if primary {
 					logPrintf("all processes considered primary, signalling other processes")
 				} else {
