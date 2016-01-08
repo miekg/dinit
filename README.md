@@ -13,15 +13,16 @@ within Docker containers.
 
 Dinit will pass any environment variables through to the programs it is
 starting. It will pass signals (SIGHUP, SIGTERM and SIGINT) through to the
-children it is managing. It will *not* restart any of its children if they die.
+children it is managing. It will *not* restart any of its children if they die, i.e.
+we want the container to die and be restarted or noticed by the supervisor.
 
 If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
 
 Dinit has the concept of a *primary* process which is the *last* process listed.
 If that process dies dinit will kill the remaining processes and exit. This
-allows for cleanups and container restarts.
-
+allows for cleanups and container restarts. You can also mark all processes as
+primary, meaning that if one of them dies, all of them are stopped.
 
 ### Why?
 
