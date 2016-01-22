@@ -32,6 +32,8 @@ func socket() {
 		logFatalf("socket: listen error: %s", err)
 	}
 
+	logPrintf("socket: successfully created")
+
 	for {
 		fd, err := l.Accept()
 		if err != nil {
