@@ -17,10 +17,13 @@ import (
 )
 
 var (
+	Version = "0.5"
+
 	timeout       time.Duration
 	maxproc       float64
 	start, stop   string
 	primary, sock bool
+	version       bool
 
 	test bool // only used then testing
 
@@ -32,7 +35,8 @@ const testPid = 123
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: dinit [OPTION...] -r CMD [OPTION..] [-r CMD [OPTION...]]...")
+		fmt.Fprintf(os.Stderr, "Usage: dinit (version %s) [OPTION...] -r CMD [OPTION..] [-r CMD [OPTION...]]...\n", Version)
+
 		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment.")
 		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to the processes.\n")
 		flag.PrintDefaults()
@@ -46,7 +50,7 @@ func main() {
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", envString("$DINIT_START", ""), "command to run during startup, non-zero exit status aborts dinit (DINIT_START)")
 	flag.StringVar(&stop, "stop", envString("$DINIT_STOP", ""), "command to run during teardown (DINIT_STOP)")
-	flag.BoolVar(&sock, "submit", false, "write -r CMD... to the unix socket /tmp/dinit.sock")
+	flag.BoolVar(&sock, "submit", false, "write -r CMD... to the unix socket " + socketName)
 	flag.BoolVar(&primary, "primary", false, "all processes are primary")
 
 	if len(commands) == 0 {
