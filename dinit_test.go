@@ -134,10 +134,9 @@ func exampleTestPrimary() {
 	// dinit: all processes exited, goodbye!
 }
 
-func ExampleTestSubProcessReaping() {
-//	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")}, false)
+// Can test outside of Docker - i.e. with proper init running.
+func exampleTestSubProcessReaping() {
 	run([]*exec.Cmd{command("./zombie.sh"), command("less - ")}, false)
 	wait()
 	time.Sleep(5 * time.Second)
-	// Output: dinit: blaat
 }
