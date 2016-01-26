@@ -1,8 +1,7 @@
 FROM alpine:3.1
 MAINTAINER Miek Gieben <miek@miek.nl> (@miekg)
 
-ENV DINIT_TEST 70
+ENV DINIT_TEST 7000
 ADD dinit /dinit
-ADD zombie.sh /zombie.sh
 
-ENTRYPOINT [ "/dinit", "-r", "/zombie.sh", "-r", "/bin/sleep", "$DINIT_TEST" ]
+ENTRYPOINT [ "/dinit", "/bin/sleep", "$DINIT_TEST" ]
