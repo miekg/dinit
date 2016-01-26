@@ -92,7 +92,6 @@ func main() {
 		}
 		return
 	}
-
 	run(commands, false)
 	wait()
 }

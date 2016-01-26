@@ -133,3 +133,11 @@ func exampleTestPrimary() {
 	// dinit: pid 123, finished: [killall -SEGV cat] with error: signal: interrupt
 	// dinit: all processes exited, goodbye!
 }
+
+func ExampleTestSubProcessReaping() {
+//	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")}, false)
+	run([]*exec.Cmd{command("./zombie.sh"), command("less - ")}, false)
+	wait()
+	time.Sleep(5 * time.Second)
+	// Output: dinit: blaat
+}
