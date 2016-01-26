@@ -133,3 +133,10 @@ func exampleTestPrimary() {
 	// dinit: pid 123, finished: [killall -SEGV cat] with error: signal: interrupt
 	// dinit: all processes exited, goodbye!
 }
+
+// Can test outside of Docker - i.e. with proper init running.
+func exampleTestSubProcessReaping() {
+	run([]*exec.Cmd{command("./zombie.sh"), command("less - ")}, false)
+	wait()
+	time.Sleep(5 * time.Second)
+}

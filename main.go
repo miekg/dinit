@@ -24,6 +24,7 @@ var (
 	start, stop   string
 	primary, sock bool
 	version       bool
+	all           bool
 
 	test bool // only used then testing
 
@@ -50,7 +51,8 @@ func main() {
 	flag.Float64Var(&maxproc, "core-fraction", 0.0, "set GOMAXPROCS to runtime.NumCPU() * core-fraction, when GOMAXPROCS already set use that")
 	flag.StringVar(&start, "start", envString("$DINIT_START", ""), "command to run during startup, non-zero exit status aborts dinit (DINIT_START)")
 	flag.StringVar(&stop, "stop", envString("$DINIT_STOP", ""), "command to run during teardown (DINIT_STOP)")
-	flag.BoolVar(&sock, "submit", false, "write -r CMD... to the unix socket " + socketName)
+	flag.BoolVar(&sock, "submit", false, "write -r CMD... to the unix socket "+socketName)
+	flag.BoolVar(&all, "all", false, "reap subprocesses as well")
 	flag.BoolVar(&primary, "primary", false, "all processes are primary")
 
 	if len(commands) == 0 {
@@ -92,7 +94,9 @@ func main() {
 		}
 		return
 	}
-
+	if all {
+		go sigChld()
+	}
 	run(commands, false)
 	wait()
 }
