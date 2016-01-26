@@ -4,4 +4,4 @@ MAINTAINER Miek Gieben <miek@miek.nl> (@miekg)
 ENV DINIT_TEST 7000
 ADD dinit /dinit
 
-ENTRYPOINT [ "/dinit", "/bin/sleep", "$DINIT_TEST" ]
+ENTRYPOINT [ "/dinit", "-r", "/bin/sleep", "$DINIT_TEST" ]
