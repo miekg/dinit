@@ -17,14 +17,13 @@ import (
 )
 
 var (
-	Version = "0.6"
+	Version = "0.6.1" // Remove and just use git hash when building it
 
 	timeout       time.Duration
 	maxproc       float64
 	start, stop   string
 	primary, sock bool
 	version       bool
-	all           bool
 
 	test bool // only used then testing
 
@@ -52,7 +51,6 @@ func main() {
 	flag.StringVar(&start, "start", envString("$DINIT_START", ""), "command to run during startup, non-zero exit status aborts dinit (DINIT_START)")
 	flag.StringVar(&stop, "stop", envString("$DINIT_STOP", ""), "command to run during teardown (DINIT_STOP)")
 	flag.BoolVar(&sock, "submit", false, "write -r CMD... to the unix socket "+socketName)
-	flag.BoolVar(&all, "all", false, "reap subprocesses as well")
 	flag.BoolVar(&primary, "primary", false, "all processes are primary")
 
 	if len(commands) == 0 {
@@ -94,7 +92,7 @@ func main() {
 		}
 		return
 	}
-	if all {
+	if os.Getpid() == 1 {
 		go reap()
 	}
 	run(commands, false)

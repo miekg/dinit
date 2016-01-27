@@ -24,6 +24,9 @@ If that process dies dinit will kill the remaining processes and exit. This
 allows for cleanups and container restarts. You can also mark all processes as
 primary, meaning that if one of them dies, all of them are stopped.
 
+If dinit runs as pid 1 it will cleanup zombies that might be created by any of
+the processes.
+
 ### Why?
 
 See <https://blog.phusion.nl/2015/01/20/docker-and-the-pid-1-zombie-reaping-problem/>.
@@ -73,7 +76,6 @@ With `dinit -submit` you can easily access this functionality:
 
 ## Options
 
-* `all`: reap all processes that exit.
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
   multiplied my `maxproc`, typical values are 0.5 or 1.0. When 0.0 `dinit` will
   not set GOMAXPROCS by itself. If GOMAXPROCS is *already* set in the environment
