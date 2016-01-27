@@ -95,7 +95,7 @@ func main() {
 		return
 	}
 	if all {
-		go sigChld()
+		go reap()
 	}
 	run(commands, false)
 	wait()
@@ -136,10 +136,17 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 				pid = testPid
 			}
 
-			if err != nil {
-				logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
-			} else {
+			switch err {
+			default:
+				_, ok := err.(*os.SyscallError)
+				if !ok {
+					logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
+					break
+				}
+				fallthrough
+			case nil:
 				logPrintf("pid %d, finished: %v", pid, c.Args)
+
 			}
 
 			procs.Remove(c)
