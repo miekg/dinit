@@ -42,7 +42,7 @@ func ExampleRun() {
 	run([]*exec.Cmd{command("cat /dev/null")}, false)
 	wait()
 	// Output: dinit: pid 123 started: [cat /dev/null]
-	// dinit: pid 123, finished: [cat /dev/null]
+	// dinit: pid 123 finished: [cat /dev/null]
 	// dinit: pid 123 was primary, signalling other processes
 	// dinit: all processes exited, goodbye!
 }
@@ -58,7 +58,7 @@ func ExampleRunINT() {
 	wait()
 	// Output: dinit: pid 123 started: [sleep 10]
 	// dinit: signal 2 sent to pid 123
-	// dinit: pid 123, finished: [sleep 10] with error: signal: interrupt
+	// dinit: pid 123 finished: [sleep 10] with error: signal: interrupt
 	// dinit: pid 123 was primary, signalling other processes
 	// dinit: all processes exited, goodbye!
 }
@@ -70,7 +70,7 @@ func ExampleFailToStart() {
 	// Output: dinit: pid 123 started: [sleep 10]
 	// dinit: process failed to start: exec: "verbose": executable file not found in $PATH
 	// dinit: signal 2 sent to pid 123
-	// dinit: pid 123, finished: [sleep 10] with error: signal: interrupt
+	// dinit: pid 123 finished: [sleep 10] with error: signal: interrupt
 	// dinit: all processes exited, goodbye!
 }
 
@@ -81,10 +81,10 @@ func ExampleTestAllPrimary() {
 	wait()
 	// Output: dinit: pid 123 started: [sleep 2]
 	// dinit: pid 123 started: [sleep 20]
-	// dinit: pid 123, finished: [sleep 2]
+	// dinit: pid 123 finished: [sleep 2]
 	// dinit: all processes considered primary, signalling other processes
 	// dinit: signal 2 sent to pid 123
-	// dinit: pid 123, finished: [sleep 20] with error: signal: interrupt
+	// dinit: pid 123 finished: [sleep 20] with error: signal: interrupt
 	// dinit: all processes considered primary, signalling other processes
 	// dinit: all processes exited, goodbye!
 }
@@ -108,8 +108,8 @@ func ExampleTestSubmit() {
 	// dinit: 2 processes still alive after SIGINT/SIGTERM
 	// dinit: signal 9 sent to pid 123
 	// dinit: signal 9 sent to pid 123
-	// dinit: pid 123, finished: [/bin/sleep 4] with error: signal: killed
-	// dinit: pid 123, finished: [sleep 3] with error: signal: killed
+	// dinit: pid 123 finished: [/bin/sleep 4] with error: signal: killed
+	// dinit: pid 123 finished: [sleep 3] with error: signal: killed
 	// dinit: all processes considered primary, signalling other processes
 	// dinit: 1 processes still alive after SIGINT/SIGTERM
 	// dinit: signal 9 sent to pid 123
@@ -125,12 +125,12 @@ func exampleTestPrimary() {
 	wait()
 	// Output: dinit: pid 123 started: [less -]
 	// dinit: pid 123 started: [killall -SEGV cat]
-	// dinit: pid 123, finished: [less -]
+	// dinit: pid 123 finished: [less -]
 	// dinit: pid 123 started: [cat]
-	// dinit: pid 123, finished: [cat]
+	// dinit: pid 123 finished: [cat]
 	// dinit: pid 123 was primary, signalling other processes
 	// dinit: signal 2 sent to pid 123
-	// dinit: pid 123, finished: [killall -SEGV cat] with error: signal: interrupt
+	// dinit: pid 123 finished: [killall -SEGV cat] with error: signal: interrupt
 	// dinit: all processes exited, goodbye!
 }
 

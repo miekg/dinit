@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	Version = "0.5"
+	Version = "0.6"
 
 	timeout       time.Duration
 	maxproc       float64
@@ -140,12 +140,12 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 			default:
 				_, ok := err.(*os.SyscallError)
 				if !ok {
-					logPrintf("pid %d, finished: %v with error: %v", pid, c.Args, err)
+					logPrintf("pid %d finished: %v with error: %v", pid, c.Args, err)
 					break
 				}
 				fallthrough
 			case nil:
-				logPrintf("pid %d, finished: %v", pid, c.Args)
+				logPrintf("pid %d finished: %v", pid, c.Args)
 
 			}
 

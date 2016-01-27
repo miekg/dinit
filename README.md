@@ -73,6 +73,7 @@ With `dinit -submit` you can easily access this functionality:
 
 ## Options
 
+* `all`: reap all processes that exit.
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
   multiplied my `maxproc`, typical values are 0.5 or 1.0. When 0.0 `dinit` will
   not set GOMAXPROCS by itself. If GOMAXPROCS is *already* set in the environment
