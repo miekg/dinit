@@ -7,17 +7,15 @@ import (
 )
 
 func sigChld() {
-	var sigs = make(chan os.Signal, 1)
+	var sigs = make(chan os.Signal, 10) // TODO(miek): buffered channel to fix races?
 	signal.Notify(sigs, syscall.SIGCHLD)
 
 	for {
 		select {
 		case <-sigs:
 			go reap()
-		default:
 		}
 	}
-
 }
 
 func reap() {
