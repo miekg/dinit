@@ -13,8 +13,8 @@ within Docker containers.
 
 Dinit will pass any environment variables through to the programs it is
 starting. It will pass signals (SIGHUP, SIGTERM and SIGINT) through to the
-children it is managing. It will *not* restart any of its children if they die, i.e.
-we want the container to die and be restarted or noticed by the supervisor.
+children it is managing. It will *not* restart any of its children if they die,
+i.e. we want the container to die and be restarted or noticed by the supervisor.
 
 If one of the programs fails to start dinit will exit with an error. If programs
 daemonize dinit will lose track of them.
@@ -36,7 +36,7 @@ But a simpler solution. Get a standard container image and instead of:
 
 Do:
 
-    ADD dinit dinit
+    ADD dinit /dinit
     ENTRYPOINT ["/dinit", "-r", "/bin/sleep", "80"]
 
 or
@@ -77,17 +77,17 @@ With `dinit -submit` you can easily access this functionality:
 ## Options
 
 * `maxproc` or `core-fraction`: set GOMAXPROCS to the number of CPUs on the host
-  multiplied my `maxproc`, typical values are 0.5 or 1.0. When 0.0 `dinit` will
+  multiplied by `maxproc`, typical values are 0.5 or 1.0. When 0.0 `dinit` will
   not set GOMAXPROCS by itself. If GOMAXPROCS is *already* set in the environment
   this does nothing.
-* `start`: run a command when starting up. On any failure, `dinit` exits. The complete
-  command must be given as one string, enclosed with quotes.
+* `start`: run a command when starting up. On any failure, `dinit` exits. The
+  complete command must be given as one string, enclosed with quotes.
 * `stop`: run command on exit. The complete command must be given as one string,
   enclosed with quotes.
 * `timeout`: time in seconds before SIGKILL is sent after the SIGTERM has been
   sent.
-* `primary`: consider all commands primary; if one of them dies then take down the
-  other processes.
+* `primary`: consider all commands primary; if one of them dies then take down
+  the other processes.
 * `submit`: submit a command line to dinit's socket interface.
 
 
@@ -100,8 +100,8 @@ Start "sleep 2" with dinit, but before you do run `sleep 1`:
     2015/07/29 21:49:06 dinit: pid 16759, finished: [/bin/sleep 2]
     2015/07/29 21:49:06 dinit: all processes exited, goodbye!
 
-With `-submit` you can start extra processes that will be children of the original dinit
-process.
+With `-submit` you can start extra processes that will be children of the
+original dinit process.
 
     % dinit -submit -r /bin/sleep 2
 
