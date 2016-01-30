@@ -18,7 +18,7 @@ func childSignal(notify chan bool) {
 		select {
 		case notify <- true:
 		default:
-			// Channel full, does not matter as we wait for a children.
+			// Channel full, does not matter as we wait for all children.
 		}
 	}
 }
