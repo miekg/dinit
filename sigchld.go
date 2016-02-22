@@ -29,7 +29,6 @@ func reap() {
 
 	go childSignal(notify)
 
-
 	for {
 		pid, err := syscall.Wait4(-1, &wstatus, 0, nil)
 		for err == syscall.EINTR {
@@ -38,6 +37,6 @@ func reap() {
 		if err == syscall.ECHILD {
 			break
 		}
-		logPrintf("pid %d, finished, wstatus: %+v", pid, wstatus)
+		lg.Printf("pid %d, finished, wstatus: %+v", pid, wstatus)
 	}
 }

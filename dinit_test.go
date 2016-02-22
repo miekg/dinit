@@ -37,10 +37,10 @@ func TestStart(t *testing.T) {
 }
 
 func ExampleRun() {
-	test = true
+	test.SetTest(true)
 
 	run([]*exec.Cmd{command("cat /dev/null")}, false)
-	wait()
+	wait(false)
 	// Output: dinit: pid 123 started: [cat /dev/null]
 	// dinit: pid 123 finished: [cat /dev/null]
 	// dinit: pid 123 was primary, signalling other processes
@@ -48,14 +48,14 @@ func ExampleRun() {
 }
 
 func ExampleRunINT() {
-	test = true
+	test.SetTest(true)
 
 	run([]*exec.Cmd{command("sleep 10")}, false)
 	go func() {
 		time.Sleep(10 * time.Millisecond)
 		procs.Signal(syscall.SIGINT)
 	}()
-	wait()
+	wait(false)
 	// Output: dinit: pid 123 started: [sleep 10]
 	// dinit: signal 2 sent to pid 123
 	// dinit: pid 123 finished: [sleep 10] with error: signal: interrupt
@@ -64,9 +64,9 @@ func ExampleRunINT() {
 }
 
 func ExampleFailToStart() {
-	test = true
+	test.SetTest(true)
 	run([]*exec.Cmd{command("sleep 10"), command("verbose")}, false)
-	wait()
+	wait(false)
 	// Output: dinit: pid 123 started: [sleep 10]
 	// dinit: process failed to start: exec: "verbose": executable file not found in $PATH
 	// dinit: signal 2 sent to pid 123
@@ -75,10 +75,10 @@ func ExampleFailToStart() {
 }
 
 func ExampleTestAllPrimary() {
-	test = true
-	primary = true
+	test.SetTest(true)
+	prim.SetAll(true)
 	run([]*exec.Cmd{command("sleep 2"), command("sleep 20")}, false)
-	wait()
+	wait(false)
 	// Output: dinit: pid 123 started: [sleep 2]
 	// dinit: pid 123 started: [sleep 20]
 	// dinit: pid 123 finished: [sleep 2]
@@ -91,18 +91,20 @@ func ExampleTestAllPrimary() {
 
 // Test is flaky because of random output ordering.
 func ExampleTestSubmit() {
-	test = true
-	socketName = "dinit.sock"
-	go socket()
+	const name = "dinit.sock"
+
+	test.SetTest(true)
+	go socket(name)
+	defer os.Remove(name)
 	time.Sleep(1 * time.Second)
 
 	run([]*exec.Cmd{command("sleep 3")}, false)
-	write([]*exec.Cmd{command("/bin/sleep 4")})
+	write(name, []*exec.Cmd{command("/bin/sleep 4")})
 
 	time.Sleep(1 * time.Second)
 
 	procs.Signal(syscall.SIGINT)
-	wait()
+	wait(true)
 	// dinit: pid 123 started: [sleep 3]
 	// dinit: pid 123 started: [/bin/sleep 4]
 	// dinit: 2 processes still alive after SIGINT/SIGTERM
@@ -120,9 +122,9 @@ func ExampleTestSubmit() {
 
 // Test is flaky because of random output ordering.
 func exampleTestPrimary() {
-	test = true
+	test.SetTest(true)
 	run([]*exec.Cmd{command("less -"), command("killall -SEGV cat"), command("cat")}, false)
-	wait()
+	wait(false)
 	// Output: dinit: pid 123 started: [less -]
 	// dinit: pid 123 started: [killall -SEGV cat]
 	// dinit: pid 123 finished: [less -]
@@ -137,6 +139,6 @@ func exampleTestPrimary() {
 // Can test outside of Docker - i.e. with proper init running.
 func exampleTestSubProcessReaping() {
 	run([]*exec.Cmd{command("./zombie.sh"), command("less - ")}, false)
-	wait()
+	wait(false)
 	time.Sleep(5 * time.Second)
 }

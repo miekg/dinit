@@ -4,7 +4,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"os/exec"
@@ -17,7 +16,7 @@ import (
 )
 
 var (
-	Version = "0.6.1" // Remove and just use git hash when building it
+	Version = "0.6.2" // Remove and just use git hash when building it?
 
 	timeout       time.Duration
 	maxproc       float64
@@ -25,10 +24,11 @@ var (
 	primary, sock bool
 	version       bool
 
-	test bool // only used then testing
-
 	procs = NewProcs()
 	prim  = NewPrimary()
+
+	test = &Test{} // only for testing
+	lg   = &Log{}
 )
 
 const testPid = 123
@@ -59,18 +59,20 @@ func main() {
 	}
 	flag.Parse()
 
+	prim.SetAll(primary)
+
 	if !sock {
 		// If sending something over the socket, don't open it.
-		go socket()
+		go socket(socketName)
 		defer os.Remove(socketName)
 	}
 
 	if maxproc > 0.0 {
 		if v := os.Getenv("GOMAXPROCS"); v != "" {
-			logPrintf("GOMAXPROCS already set, using that value: %s", v)
+			lg.Printf("GOMAXPROCS already set, using that value: %s", v)
 		} else {
 			numcpu := strconv.Itoa(int(math.Ceil(float64(runtime.NumCPU()) * maxproc)))
-			logPrintf("using %s as GOMAXPROCS", numcpu)
+			lg.Printf("using %s as GOMAXPROCS", numcpu)
 			os.Setenv("GOMAXPROCS", numcpu)
 		}
 	}
@@ -78,7 +80,7 @@ func main() {
 	if start != "" {
 		startcmd := command(start)
 		if err := startcmd.Run(); err != nil {
-			logFatalf("start command failed: %s", err)
+			lg.Fatalf("start command failed: %s", err)
 		}
 	}
 	if stop != "" {
@@ -86,9 +88,9 @@ func main() {
 		defer stopcmd.Run()
 	}
 	if sock {
-		err := write(commands)
+		err := write(socketName, commands)
 		if err != nil {
-			logFatalf("failed to write to unix socket: %s", err)
+			lg.Fatalf("failed to write to unix socket: %s", err)
 		}
 		return
 	}
@@ -96,7 +98,7 @@ func main() {
 		go reap()
 	}
 	run(commands, false)
-	wait()
+	wait(sock)
 }
 
 // run runs the commands as given on the command line. If noprimary is
@@ -107,7 +109,7 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 		// to wrong command, when we run in a loop.
 		c := commands[i]
 		if err := c.Start(); err != nil {
-			logPrintf("process failed to start: %v", err)
+			lg.Printf("process failed to start: %v", err)
 			if !fromsocket {
 				procs.Cleanup(syscall.SIGINT)
 				return
@@ -120,17 +122,17 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 		}
 
 		pid := c.Process.Pid
-		if test {
+		if test.Test() {
 			pid = testPid
 		}
-		logPrintf("pid %d started: %v", pid, c.Args)
+		lg.Printf("pid %d started: %v", pid, c.Args)
 
 		procs.Insert(c)
 
 		go func() {
 			err := c.Wait()
 			pid := c.Process.Pid
-			if test {
+			if test.Test() {
 				pid = testPid
 			}
 
@@ -138,21 +140,21 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 			default:
 				_, ok := err.(*os.SyscallError)
 				if !ok {
-					logPrintf("pid %d finished: %v with error: %v", pid, c.Args, err)
+					lg.Printf("pid %d finished: %v with error: %v", pid, c.Args, err)
 					break
 				}
 				fallthrough
 			case nil:
-				logPrintf("pid %d finished: %v", pid, c.Args)
+				lg.Printf("pid %d finished: %v", pid, c.Args)
 
 			}
 
 			procs.Remove(c)
-			if primary || prim.Primary(c.Process.Pid) {
-				if primary {
-					logPrintf("all processes considered primary, signalling other processes")
+			if prim.All() || prim.Primary(c.Process.Pid) {
+				if prim.All() {
+					lg.Printf("all processes considered primary, signalling other processes")
 				} else {
-					logPrintf("pid %d was primary, signalling other processes", pid)
+					lg.Printf("pid %d was primary, signalling other processes", pid)
 				}
 				procs.Cleanup(syscall.SIGINT)
 			}
@@ -162,8 +164,8 @@ func run(commands []*exec.Cmd, fromsocket bool) {
 }
 
 // wait waits for commands to finish.
-func wait() {
-	defer func() { logPrintf("all processes exited, goodbye!") }()
+func wait(sock bool) {
+	defer func() { lg.Printf("all processes exited, goodbye!") }()
 	if !sock {
 		defer os.Remove(socketName)
 	}
@@ -202,16 +204,4 @@ func command(arg string) *exec.Cmd {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd
-}
-
-func logPrintf(format string, v ...interface{}) {
-	if test {
-		fmt.Printf("dinit: "+format+"\n", v...)
-		return
-	}
-	log.Printf("dinit: "+format, v...)
-}
-
-func logFatalf(format string, v ...interface{}) {
-	log.Fatalf("dinit: "+format, v...)
 }

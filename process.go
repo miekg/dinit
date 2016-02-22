@@ -13,6 +13,7 @@ import (
 type Primary struct {
 	sync.RWMutex
 	first map[int]bool
+	all   bool
 }
 
 func NewPrimary() *Primary {
@@ -30,6 +31,18 @@ func (p *Primary) Primary(pid int) bool {
 	defer p.RUnlock()
 	_, ok := p.first[pid]
 	return ok
+}
+
+func (p *Primary) All() bool {
+	p.RLock()
+	defer p.RUnlock()
+	return p.all
+}
+
+func (p *Primary) SetAll(all bool) {
+	p.Lock()
+	defer p.Unlock()
+	p.all = all
 }
 
 // Procs holds the processes that we run.
@@ -59,10 +72,10 @@ func (c *Procs) Signal(sig os.Signal) {
 	c.RLock()
 	defer c.RUnlock()
 	for pid, cmd := range c.pids {
-		if test {
-			logPrintf("signal %d sent to pid %d", sig, testPid)
+		if test.Test() {
+			lg.Printf("signal %d sent to pid %d", sig, testPid)
 		} else {
-			logPrintf("signal %d sent to pid %d", sig, pid)
+			lg.Printf("signal %d sent to pid %d", sig, pid)
 		}
 		cmd.Process.Signal(sig)
 	}
@@ -75,7 +88,7 @@ func (c *Procs) Cleanup(sig os.Signal) {
 	time.Sleep(2 * time.Second)
 
 	if procs.Len() > 0 {
-		logPrintf("%d processes still alive after SIGINT/SIGTERM", procs.Len())
+		lg.Printf("%d processes still alive after SIGINT/SIGTERM", procs.Len())
 		time.Sleep(timeout)
 	}
 	procs.Signal(syscall.SIGKILL)

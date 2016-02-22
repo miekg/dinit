@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var (
+const (
 	socketName   = "/tmp/dinit.sock"
 	socketMaxLen = 512
 )
@@ -17,7 +17,7 @@ func startCommand(c net.Conn) {
 
 	defer c.Close()
 	if err != nil {
-		logPrintf("socket: error reading data: %s", err)
+		lg.Printf("socket: error reading data: %s", err)
 		return
 	}
 
@@ -26,18 +26,18 @@ func startCommand(c net.Conn) {
 	run(commands, true)
 }
 
-func socket() {
-	l, err := net.Listen("unix", socketName)
+func socket(sock string) {
+	l, err := net.Listen("unix", sock)
 	if err != nil {
-		logFatalf("socket: listen error: %s", err)
+		lg.Fatalf("socket: listen error: %s", err)
 	}
 
-	logPrintf("socket: successfully created")
+	lg.Printf("socket: successfully created")
 
 	for {
 		fd, err := l.Accept()
 		if err != nil {
-			logPrintf("socket: accept error: %s", err)
+			lg.Printf("socket: accept error: %s", err)
 			continue
 		}
 
@@ -45,8 +45,8 @@ func socket() {
 	}
 }
 
-func write(cmds []*exec.Cmd) error {
-	c, err := net.Dial("unix", socketName)
+func write(sock string, cmds []*exec.Cmd) error {
+	c, err := net.Dial("unix", sock)
 	if err != nil {
 		return err
 	}
