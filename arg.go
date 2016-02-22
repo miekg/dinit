@@ -23,7 +23,7 @@ func Args(args []string) []*exec.Cmd {
 			cmd = &exec.Cmd{Stdout: os.Stdout, Stderr: os.Stderr}
 
 			if i+1 == len(args) {
-				logFatalf("need a command after -r")
+				lg.Fatalf("need a command after -r")
 			}
 			cmd.Args = append(cmd.Args, args[i+1])
 			cmd.Path = args[i+1]
