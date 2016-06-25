@@ -27,7 +27,7 @@ func Args(args []string) []*exec.Cmd {
 			}
 
 			path, err := exec.LookPath(os.ExpandEnv(args[i+1]))
-			if (err != nil) {
+			if err != nil {
 				lg.Fatalf("invalid arg: %s", args[i+1])
 			}
 
