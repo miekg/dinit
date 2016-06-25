@@ -25,8 +25,14 @@ func Args(args []string) []*exec.Cmd {
 			if i+1 == len(args) {
 				lg.Fatalf("need a command after -r")
 			}
-			cmd.Args = append(cmd.Args, args[i+1])
-			cmd.Path = args[i+1]
+
+			path, err := exec.LookPath(os.ExpandEnv(args[i+1]))
+			if (err != nil) {
+				lg.Fatalf("invalid arg: %s", args[i+1])
+			}
+
+			cmd.Args = append(cmd.Args, path)
+			cmd.Path = path
 
 			// Clear the args so flag parsing keeps working.
 			args[i] = ""
