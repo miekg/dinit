@@ -9,7 +9,7 @@ import (
 func envInt(k string, d int) int {
 	x := os.ExpandEnv(k)
 	if x != "" {
-		if x1, e := strconv.Atoi(x); e != nil {
+		if x1, e := strconv.Atoi(x); e == nil {
 			return x1
 		}
 	}
@@ -19,7 +19,7 @@ func envInt(k string, d int) int {
 func envDuration(k string, d time.Duration) time.Duration {
 	x := os.ExpandEnv(k)
 	if x != "" {
-		if x1, e := strconv.Atoi(x); e != nil {
+		if x1, e := strconv.Atoi(x); e == nil {
 			return time.Duration(x1) * time.Second
 		}
 	}
