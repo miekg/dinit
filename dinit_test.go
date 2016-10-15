@@ -77,8 +77,10 @@ func ExampleFailToStart() {
 func ExampleTestAllPrimary() {
 	test.SetTest(true)
 	prim.SetAll(true)
+	defer prim.SetAll(false)
 	run([]*exec.Cmd{command("sleep 2"), command("sleep 20")}, false)
 	wait(false)
+	time.Sleep(3 * time.Second) // wait for Cleanup to terminate
 	// Output: dinit: pid 123 started: [sleep 2]
 	// dinit: pid 123 started: [sleep 20]
 	// dinit: pid 123 finished: [sleep 2]
@@ -99,24 +101,24 @@ func ExampleTestSubmit() {
 	time.Sleep(1 * time.Second)
 
 	run([]*exec.Cmd{command("sleep 3")}, false)
-	write(name, []*exec.Cmd{command("/bin/sleep 4")})
+	write(name, []*exec.Cmd{command("/bin/bash -c \"trap '' INT; /bin/sleep 4\"")})
 
 	time.Sleep(1 * time.Second)
 
 	procs.Signal(syscall.SIGINT)
 	wait(true)
+	// Output:
+	// dinit: socket: successfully created
 	// dinit: pid 123 started: [sleep 3]
-	// dinit: pid 123 started: [/bin/sleep 4]
-	// dinit: 2 processes still alive after SIGINT/SIGTERM
-	// dinit: signal 9 sent to pid 123
-	// dinit: signal 9 sent to pid 123
-	// dinit: pid 123 finished: [/bin/sleep 4] with error: signal: killed
-	// dinit: pid 123 finished: [sleep 3] with error: signal: killed
-	// dinit: all processes considered primary, signalling other processes
+	// dinit: pid 123 started: [/bin/bash -c trap '' INT; /bin/sleep 4]
+	// dinit: signal 2 sent to pid 123
+	// dinit: signal 2 sent to pid 123
+	// dinit: pid 123 finished: [sleep 3] with error: signal: interrupt
+	// dinit: pid 123 was primary, signalling other processes
+	// dinit: signal 2 sent to pid 123
 	// dinit: 1 processes still alive after SIGINT/SIGTERM
 	// dinit: signal 9 sent to pid 123
-	// dinit: signal 2 sent to pid 123
-	// dinit: all processes considered primary, signalling other processes
+	// dinit: pid 123 finished: [/bin/bash -c trap '' INT; /bin/sleep 4] with error: signal: killed
 	// dinit: all processes exited, goodbye!
 }
 

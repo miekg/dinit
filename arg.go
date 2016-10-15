@@ -1,80 +1,83 @@
 package main
 
 import (
+	"encoding/csv"
+	"io"
 	"os"
 	"os/exec"
 )
 
-func Args(args []string) []*exec.Cmd {
-	var (
-		cmd  *exec.Cmd
-		seen bool
-	)
+func Args(args []string) ([]*exec.Cmd, []string) {
+	var flags []string
+	var cmd *exec.Cmd
 	commands := []*exec.Cmd{}
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "-r":
-			if cmd != nil {
-				commands = append(commands, cmd)
-			}
-
-			seen = true
-
-			cmd = &exec.Cmd{Stdout: os.Stdout, Stderr: os.Stderr}
-
 			if i+1 == len(args) {
 				lg.Fatalf("need a command after -r")
 			}
 
+			if cmd != nil {
+				commands = append(commands, cmd)
+			}
+			cmd = &exec.Cmd{Stdout: os.Stdout, Stderr: os.Stderr}
+
 			path, err := exec.LookPath(os.ExpandEnv(args[i+1]))
 			if err != nil {
-				lg.Fatalf("invalid arg: %s", args[i+1])
+				lg.Fatalf("invalid command %q: %v", args[i+1], err)
 			}
-
-			cmd.Args = append(cmd.Args, path)
+			cmd.Args = []string{path}
 			cmd.Path = path
 
-			// Clear the args so flag parsing keeps working.
-			args[i] = ""
-			args[i+1] = ""
-
 			i++
-			continue
-		case "\\-r":
-			args[i] = "-r"
-		}
-
-		if seen {
+		default:
+			if cmd == nil {
+				flags = append(flags, args[i])
+				break
+			}
+			if args[i] == "\\-r" {
+				args[i] = "-r"
+			}
 			cmd.Args = append(cmd.Args, os.ExpandEnv(args[i]))
-			args[i] = ""
 		}
 	}
 	if cmd != nil {
 		commands = append(commands, cmd)
 	}
-	return commands
+	return commands, flags
 }
 
 // String is the opposite of Args and returns the full command line
 // string as first seen.
-func String(cmds []*exec.Cmd) string {
-	// Bit lame that we encode and decode twice when writing to the socket...
-	s := ""
-	for i, c := range cmds {
-		s += "-r "
-		for j, a := range c.Args {
+func String(cmds []*exec.Cmd) []string {
+	var s []string
+	for _, c := range cmds {
+		s = append(s, "-r")
+		for _, a := range c.Args {
 			if a == "-r" {
 				a = "\\-r"
 			}
-			if j == len(c.Args)-1 {
-				s += a
-				continue
-			}
-			s += a + " "
-		}
-		if i < len(cmds)-1 {
-			s += " "
+			s = append(s, a)
 		}
 	}
 	return s
+}
+
+func ReadArgs(r io.Reader) ([]string, error) {
+	reader := csv.NewReader(r)
+	reader.Comma = ' '
+	reader.FieldsPerRecord = -1
+	return reader.Read()
+}
+
+func WriteArgs(w io.Writer, args []string) error {
+	writer := csv.NewWriter(w)
+	writer.Comma = ' '
+	err := writer.Write(args)
+	if err != nil {
+		return err
+	}
+	writer.Flush()
+	return writer.Error()
 }
