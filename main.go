@@ -43,7 +43,8 @@ func main() {
 	}
 
 	// -r CMD [OPTION...]
-	commands := Args(os.Args)
+	commands, flags := Args(os.Args)
+	os.Args = flags
 
 	flag.DurationVar(&timeout, "timeout", envDuration("$DINIT_TIMEOUT", 10*time.Second), "time in seconds between SIGTERM and SIGKILL (DINIT_TIMEOUT)")
 	flag.Float64Var(&maxproc, "maxproc", 0.0, "set GOMAXPROCS to runtime.NumCPU() * maxproc, when GOMAXPROCS already set use that")
@@ -195,7 +196,13 @@ func wait(sock bool) {
 // command parses arg and returns an *exec.Cmd that is ready to be run.
 // This is currently only used for the start and stop commands.
 func command(arg string) *exec.Cmd {
-	args := strings.Fields(arg) // Split on spaces and execute.
+	args, err := ReadArgs(strings.NewReader(arg))
+	if err != nil {
+		lg.Fatalf("invalid command %q", arg)
+	}
+	if len(args) == 0 {
+		lg.Fatalf("invalid empty command")
+	}
 	for i, a := range args {
 		args[i] = os.ExpandEnv(a)
 	}

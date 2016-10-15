@@ -3,7 +3,6 @@ package main
 import (
 	"net"
 	"os/exec"
-	"strings"
 )
 
 const (
@@ -12,17 +11,15 @@ const (
 )
 
 func startCommand(c net.Conn) {
-	buf := make([]byte, socketMaxLen)
-	n, err := c.Read(buf)
-
 	defer c.Close()
+
+	cmdargs, err := ReadArgs(c)
 	if err != nil {
 		lg.Printf("socket: error reading data: %s", err)
 		return
 	}
 
-	cmdargs := strings.Fields(string(buf[0:n]))
-	commands := Args(cmdargs)
+	commands, _ := Args(cmdargs)
 	run(commands, true)
 }
 
@@ -50,10 +47,6 @@ func write(sock string, cmds []*exec.Cmd) error {
 	if err != nil {
 		return err
 	}
-	str := String(cmds)
-	_, err = c.Write([]byte(str))
-	if err != nil {
-		return err
-	}
-	return nil
+	defer c.Close()
+	return WriteArgs(c, String(cmds))
 }
