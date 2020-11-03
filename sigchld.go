@@ -35,7 +35,10 @@ func reap() {
 			pid, err = syscall.Wait4(-1, &wstatus, 0, nil)
 		}
 		if err == syscall.ECHILD {
-			break
+			// it's odd that we would get this and this used to 'break' the loop. Now
+			// log this has happened, but keep waiting.
+			lg.Printf("wait4() returned ECHILD")
+			continue
 		}
 		lg.Printf("pid %d, finished, wstatus: %+v", pid, wstatus)
 	}

@@ -38,7 +38,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: dinit (version %s) [OPTION...] -r CMD [OPTION..] [-r CMD [OPTION...]]...\n", Version)
 
 		fmt.Fprintln(os.Stderr, "Start CMDs by passing the environment.")
-		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to the processes.\n")
+		fmt.Fprintln(os.Stderr, "Distribute SIGHUP, SIGTERM and SIGINT to the processes.")
 		flag.PrintDefaults()
 	}
 
