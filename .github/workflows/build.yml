@@ -27,4 +27,4 @@ jobs:
         with:
           files: dinit
           body: |
-            See the [CHANGELOG](https://github.com/lnxjedi/env-aws-params/blob/main/CHANGELOG.md)
+            See the [CHANGELOG](https://github.com/lnxjedi/dinit/blob/main/CHANGELOG.md)
