@@ -24,7 +24,6 @@ jobs:
       - name: Release
         # softprops/action-gh-release v0.1.12
         uses: softprops/action-gh-release@2d72d869af3bf23602f9593a1e3fd739b80ac1eb
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: dinit
           body: |
